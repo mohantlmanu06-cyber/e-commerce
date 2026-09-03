@@ -1,0 +1,570 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8"/>
+    <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+    <title>GO TICKET - Passenger Details, Berth Preferences & Checkout</title>
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@500;600;700&display=swap" rel="stylesheet"/>
+    <script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#059669",
+                        "primary-hover": "#047857",
+                        "accent-emerald": "#10B981",
+                        "emerald-light": "#ECFDF5",
+                        "surface-midnight": "#05070E",
+                        "surface-light": "#F8FAFC"
+                    },
+                    fontFamily: {
+                        "sans": ["Plus Jakarta Sans"],
+                        "mono": ["JetBrains Mono"]
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        html.light body {
+            background-color: #F8FAFC;
+            background-image: 
+                radial-gradient(circle at 15% 50%, rgba(16, 185, 129, 0.08) 0%, transparent 50%),
+                radial-gradient(circle at 85% 30%, rgba(5, 150, 105, 0.05) 0%, transparent 50%);
+            color: #0F172A;
+        }
+        html.light .glass-panel {
+            background-color: rgba(255, 255, 255, 0.94);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(0, 0, 0, 0.08);
+            box-shadow: 0 4px 20px -2px rgba(0, 0, 0, 0.05);
+        }
+        html.dark body {
+            background-color: #05070E;
+            background-image: 
+                radial-gradient(circle at 15% 50%, rgba(16, 185, 129, 0.06) 0%, transparent 50%),
+                radial-gradient(circle at 85% 30%, rgba(5, 150, 105, 0.04) 0%, transparent 50%);
+            color: #E1E2ED;
+        }
+        html.dark .glass-panel {
+            background-color: rgba(11, 14, 22, 0.65);
+            backdrop-filter: blur(24px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.4);
+        }
+    </style>
+    <script src="/js/theme.js"></script>
+</head>
+<body class="font-sans min-h-screen flex flex-col transition-colors duration-300">
+<!-- Top Navigation -->
+<header class="glass-panel fixed top-0 left-0 w-full z-50 flex items-center justify-between px-6 md:px-16 h-20 transition-colors">
+    <div class="flex items-center gap-4">
+        <a href="/" class="flex items-center gap-2.5 group">
+            <!-- Exact GO TICKET Green Symbol -->
+            <div class="w-9 h-9 rounded-xl bg-primary text-white flex items-center justify-center shadow-md shadow-emerald-600/30 group-hover:scale-105 transition-transform">
+                <svg class="w-6 h-6 fill-current" viewBox="0 0 24 24">
+                    <path d="M22 10V6a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2v4c1.1 0 2 .9 2 2s-.9 2-2 2v4a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-4c-1.1 0-2-.9-2-2s.9-2 2-2zm-9 7.5h-2v-2h2v2zm0-4.5h-2v-2h2v2zm0-4.5h-2v-2h2v2z"/>
+                </svg>
+            </div>
+            <span class="text-2xl font-bold text-primary tracking-tight font-sans">GO TICKET</span>
+        </a>
+        <span class="text-gray-400 px-4 border-l border-gray-300 dark:border-gray-700 text-sm font-medium hidden sm:inline">Passenger Details & Booking</span>
+    </div>
+    <div class="flex items-center gap-3">
+        <!-- Theme Toggle Button -->
+        <button onclick="GoTicketTheme.toggleTheme()" class="theme-toggle-btn flex items-center gap-1.5 px-3 py-1.5 rounded-full border border-gray-300 dark:border-gray-700 bg-white/50 dark:bg-black/30 hover:bg-black/5 dark:hover:bg-white/10 transition-all">
+            <span class="material-symbols-outlined text-[18px]">dark_mode</span>
+            <span class="text-xs font-mono">Dark</span>
+        </button>
+        <a href="/" class="text-gray-500 hover:text-gray-800 dark:hover:text-white transition-colors flex items-center gap-1 text-sm font-medium px-2 py-1 font-mono">
+            <span class="material-symbols-outlined text-sm">close</span> Cancel
+        </a>
+    </div>
+</header>
+
+<main class="flex-grow pt-24 pb-16 px-6 max-w-7xl mx-auto w-full">
+    <!-- Booking Flow Steps Indicator -->
+    <div class="mb-8 overflow-x-auto pb-2">
+        <div class="flex items-center gap-2 min-w-[700px] text-xs font-mono">
+            <span class="text-gray-400">Search</span>
+            <span class="text-gray-400 font-bold">→</span>
+            <span class="text-gray-400">Select Train</span>
+            <span class="text-gray-400 font-bold">→</span>
+            <span class="text-gray-400">Class & Avail</span>
+            <span class="text-gray-400 font-bold">→</span>
+            <span class="text-primary font-bold bg-emerald-100 dark:bg-emerald-950 px-3 py-1 rounded-full border border-emerald-300 dark:border-emerald-800">Passenger Details</span>
+            <span class="text-gray-400 font-bold">→</span>
+            <span class="text-gray-400">Payment</span>
+            <span class="text-gray-400 font-bold">→</span>
+            <span class="text-gray-400">10-Digit PNR</span>
+        </div>
+    </div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-12 gap-8">
+        <!-- Left Column: Passenger Management -->
+        <div class="lg:col-span-8 space-y-6">
+            <!-- Added Passengers List -->
+            <section class="glass-panel rounded-2xl p-6 shadow-sm">
+                <div class="flex justify-between items-center mb-4">
+                    <h2 class="text-xl font-bold flex items-center gap-2">
+                        <span class="material-symbols-outlined text-primary">groups</span>
+                        Passenger List
+                    </h2>
+                    <span id="passengerCountBadge" class="text-xs font-mono bg-emerald-50 dark:bg-emerald-950 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800 px-3 py-1 rounded-full font-bold">0 Passengers</span>
+                </div>
+                
+                <div id="passengerList" class="space-y-3">
+                    <!-- Dynamic passenger list (EMPTY BY DEFAULT) -->
+                </div>
+            </section>
+
+            <!-- Add Passenger Form -->
+            <section class="glass-panel rounded-2xl p-6 shadow-sm">
+                <h2 class="text-xl font-bold mb-4 flex items-center gap-2">
+                    <span class="material-symbols-outlined text-primary">person_add</span>
+                    Add Passenger Details (As per Govt ID)
+                </h2>
+                <form id="addPassengerForm" class="space-y-4">
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <div>
+                            <label class="block text-xs font-mono text-gray-500 uppercase mb-1 font-bold">First Name *</label>
+                            <input id="inputFirstName" required class="w-full bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-700 rounded-xl px-4 py-2.5 text-sm focus:border-primary focus:ring-1 focus:ring-primary" placeholder="Enter first name" type="text"/>
+                        </div>
+                        <div>
+                            <label class="block text-xs font-mono text-gray-500 uppercase mb-1 font-bold">Last Name *</label>
+                            <input id="inputLastName" required class="w-full bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-700 rounded-xl px-4 py-2.5 text-sm focus:border-primary focus:ring-1 focus:ring-primary" placeholder="Enter last name" type="text"/>
+                        </div>
+                        <div>
+                            <label class="block text-xs font-mono text-gray-500 uppercase mb-1 font-bold">Age *</label>
+                            <input id="inputAge" required min="1" max="110" class="w-full bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-700 rounded-xl px-4 py-2.5 text-sm focus:border-primary focus:ring-1 focus:ring-primary" placeholder="Age in years" type="number"/>
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <div>
+                            <label class="block text-xs font-mono text-gray-500 uppercase mb-1 font-bold">Gender *</label>
+                            <select id="inputGender" class="w-full bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-700 rounded-xl px-4 py-2.5 text-sm focus:border-primary focus:ring-1 focus:ring-primary">
+                                <option value="MALE">Male</option>
+                                <option value="FEMALE">Female</option>
+                                <option value="TRANSGENDER">Transgender</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-xs font-mono text-gray-500 uppercase mb-1 font-bold">Berth Preference</label>
+                            <select id="inputBerthPref" class="w-full bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-700 rounded-xl px-4 py-2.5 text-sm focus:border-primary focus:ring-1 focus:ring-primary">
+                                <option value="WINDOW">Window Seat</option>
+                                <option value="LOWER">Lower Berth</option>
+                                <option value="MIDDLE">Middle Berth</option>
+                                <option value="UPPER">Upper Berth</option>
+                                <option value="SIDE_LOWER">Side Lower (S.Low)</option>
+                                <option value="SIDE_UPPER">Side Upper (S.Upp)</option>
+                                <option value="NO_PREFERENCE">No Preference</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-xs font-mono text-gray-500 uppercase mb-1 font-bold">Meal Preference</label>
+                            <select id="inputMealPref" class="w-full bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-700 rounded-xl px-4 py-2.5 text-sm focus:border-primary focus:ring-1 focus:ring-primary">
+                                <option value="VEG">Vegetarian Meal</option>
+                                <option value="NON_VEG">Non-Vegetarian Meal</option>
+                                <option value="JAIN_VEG">Jain Vegetarian</option>
+                                <option value="NO_MEAL">No Meal Option</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="pt-2 flex justify-between items-center">
+                        <span class="text-xs text-gray-500 font-mono">Senior Citizens (60+) receive automatic senior concession</span>
+                        <button type="submit" class="bg-primary hover:bg-primary-hover text-white px-5 py-2.5 rounded-xl text-sm font-bold transition-colors flex items-center gap-2 shadow-sm font-mono">
+                            <span class="material-symbols-outlined text-sm">add</span>
+                            + Add Passenger
+                        </button>
+                    </div>
+                </form>
+            </section>
+
+            <!-- Contact Information & Payment Mode -->
+            <section class="glass-panel rounded-2xl p-6 shadow-sm space-y-6">
+                <div>
+                    <h2 class="text-xl font-bold mb-4 flex items-center gap-2">
+                        <span class="material-symbols-outlined text-primary">contact_mail</span>
+                        Contact Information for SMS & Ticket PDF
+                    </h2>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-xs font-mono text-gray-500 uppercase mb-1 font-bold">Email ID *</label>
+                            <input id="inputContactEmail" required class="w-full bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-700 rounded-xl px-4 py-2.5 text-sm focus:border-primary focus:ring-1 focus:ring-primary" type="email" placeholder="e.g. yourname@example.com"/>
+                        </div>
+                        <div>
+                            <label class="block text-xs font-mono text-gray-500 uppercase mb-1 font-bold">Mobile Number (+91) *</label>
+                            <input id="inputContactPhone" class="w-full bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-700 rounded-xl px-4 py-2.5 text-sm focus:border-primary focus:ring-1 focus:ring-primary" type="tel" placeholder="+91 98765 43210"/>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="border-t border-gray-200 dark:border-gray-800 pt-6">
+                    <h3 class="text-base font-bold mb-3 flex items-center gap-2">
+                        <span class="material-symbols-outlined text-primary">account_balance_wallet</span>
+                        Select Payment Mode
+                    </h3>
+                    <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
+                        <label class="flex items-center gap-2 p-3 rounded-xl border border-primary bg-emerald-50/50 dark:bg-emerald-950/40 cursor-pointer">
+                            <input type="radio" name="paymentMode" value="UPI" checked class="text-primary focus:ring-primary"/>
+                            <span class="text-xs font-mono font-bold">UPI / QR</span>
+                        </label>
+                        <label class="flex items-center gap-2 p-3 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 cursor-pointer">
+                            <input type="radio" name="paymentMode" value="NET_BANKING" class="text-primary focus:ring-primary"/>
+                            <span class="text-xs font-mono font-bold">NetBanking</span>
+                        </label>
+                        <label class="flex items-center gap-2 p-3 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 cursor-pointer">
+                            <input type="radio" name="paymentMode" value="DEBIT_CARD" class="text-primary focus:ring-primary"/>
+                            <span class="text-xs font-mono font-bold">Debit Card</span>
+                        </label>
+                        <label class="flex items-center gap-2 p-3 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 cursor-pointer">
+                            <input type="radio" name="paymentMode" value="CREDIT_CARD" class="text-primary focus:ring-primary"/>
+                            <span class="text-xs font-mono font-bold">Credit Card</span>
+                        </label>
+                    </div>
+                </div>
+            </section>
+        </div>
+
+        <!-- Right Column: Summary & Price Breakdown -->
+        <div class="lg:col-span-4 space-y-6">
+            <section class="glass-panel rounded-2xl p-6 shadow-sm sticky top-28">
+                <h2 class="text-xl font-bold mb-4 pb-3 border-b border-gray-200 dark:border-gray-800 flex items-center justify-between">
+                    <span>Journey Summary</span>
+                    <span id="trainRatingBadge" class="text-xs font-mono bg-amber-50 dark:bg-amber-950 text-amber-700 dark:text-amber-300 border border-amber-200 dark:border-amber-800 px-2 py-0.5 rounded-full font-bold">★ 4.9</span>
+                </h2>
+
+                <!-- Timeline (Single Clean Arrow) -->
+                <div class="relative pl-6 mb-6">
+                    <div class="absolute left-2 top-2 bottom-2 w-0.5 bg-gray-300 dark:bg-gray-700"></div>
+                    <!-- Departure -->
+                    <div class="relative mb-6">
+                        <div class="absolute -left-6 top-1 w-3 h-3 rounded-full bg-primary ring-4 ring-emerald-100 dark:ring-emerald-950"></div>
+                        <div class="flex justify-between items-start">
+                            <div>
+                                <h4 id="sumFromStation" class="font-bold">MGR Chennai Central (MAS)</h4>
+                                <p id="sumDeparturePlatform" class="text-xs font-mono text-gray-400">Platform 5</p>
+                            </div>
+                            <span id="sumDepartureTime" class="font-mono text-lg font-bold text-primary">05:50</span>
+                        </div>
+                    </div>
+                    <!-- Arrival -->
+                    <div class="relative">
+                        <div class="absolute -left-6 top-1 w-3 h-3 rounded-full bg-gray-400"></div>
+                        <div class="flex justify-between items-start">
+                            <div>
+                                <h4 id="sumToStation" class="font-bold">KSR Bengaluru (SBC)</h4>
+                                <p id="sumArrivalPlatform" class="text-xs font-mono text-gray-400">Platform 1</p>
+                            </div>
+                            <span id="sumArrivalTime" class="font-mono text-lg font-bold">10:20</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="border-t border-gray-200 dark:border-gray-800 pt-3 mb-4 space-y-2.5 text-xs">
+                    <div class="flex justify-between items-center">
+                        <span class="text-gray-500 font-mono font-bold">Train Service</span>
+                        <span id="sumTrainNumber" class="font-bold font-mono">20608 Vande Bharat</span>
+                    </div>
+
+                    <!-- Travel Class Switcher on Booking Summary -->
+                    <div class="flex justify-between items-center">
+                        <span class="text-gray-500 font-mono font-bold">Travel Class</span>
+                        <div class="relative">
+                            <select id="classSwitcherSelect" onchange="onClassSwitched(this.value)" class="bg-emerald-50 dark:bg-emerald-950/80 border border-emerald-300 dark:border-emerald-800 text-primary rounded-lg text-xs font-bold py-1 pl-2.5 pr-7 focus:ring-primary focus:border-primary appearance-none cursor-pointer">
+                                <!-- Options dynamically injected -->
+                            </select>
+                            <span class="material-symbols-outlined text-xs text-primary absolute right-1.5 top-1/2 -translate-y-1/2 pointer-events-none">expand_more</span>
+                        </div>
+                    </div>
+
+                    <div class="flex justify-between items-center">
+                        <span class="text-gray-500 font-mono font-bold">Coach</span>
+                        <span id="sumCoachText" class="font-bold font-mono text-gray-900 dark:text-gray-100">E1</span>
+                    </div>
+
+                    <div class="flex justify-between items-center">
+                        <span class="text-gray-500 font-mono font-bold">Journey Date</span>
+                        <span id="sumDate" class="font-bold font-mono">Oct 24, 2026</span>
+                    </div>
+                </div>
+
+                <!-- Price Breakdown -->
+                <h3 class="font-bold mb-3 text-sm">Fare Breakdown (INR ₹)</h3>
+                <div id="priceBreakdownList" class="space-y-2 text-sm mb-6">
+                    <div class="text-xs text-gray-400 italic">Add at least 1 passenger to calculate live fare</div>
+                </div>
+
+                <div class="border-t border-gray-200 dark:border-gray-800 pt-4 mb-6 flex justify-between items-end">
+                    <span class="text-base font-bold">Total Amount</span>
+                    <span id="totalAmountText" class="text-3xl font-mono font-bold text-primary">₹0.00</span>
+                </div>
+
+                <button id="confirmBookingBtn" onclick="submitBooking()" class="w-full bg-[#059669] hover:bg-[#047857] text-white font-bold py-4 rounded-xl transition-all shadow-lg hover:shadow-xl active:scale-[0.98] flex items-center justify-center gap-2 font-mono">
+                    <span class="material-symbols-outlined">verified</span>
+                    Pay & Generate 10-Digit PNR
+                </button>
+                <p class="text-center text-[11px] text-gray-400 mt-3 font-mono">
+                    Official GO TICKET Reservation • Instant Confirmation
+                </p>
+            </section>
+        </div>
+    </div>
+</main>
+
+<script src="/js/api.js"></script>
+<script>
+    let currentTrain = null;
+    let selectedClassId = 'EC';
+    let selectedSeat = '14A';
+    let selectedCoach = 'E1';
+    let journeyDate = '2026-10-24';
+    let passengers = []; // Starts 100% clean/empty.
+
+    async function initPage() {
+        const params = new URLSearchParams(window.location.search);
+        const trainNum = params.get('train') || '20608';
+        selectedClassId = params.get('class') || 'EC';
+        selectedSeat = params.get('seat') || '14A';
+        selectedCoach = params.get('coach') || 'E1';
+        journeyDate = params.get('date') || '2026-10-24';
+
+        passengers = []; // Clean state
+
+        try {
+            const res = await GoTicketAPI.getTrain(trainNum);
+            if (res.success && res.data) {
+                currentTrain = res.data;
+                populateClassSwitcher();
+                renderSummary();
+            }
+            renderPassengerList();
+            updatePricing();
+        } catch (e) {
+            console.error("Failed to load train:", e);
+        }
+    }
+
+    function populateClassSwitcher() {
+        const select = document.getElementById('classSwitcherSelect');
+        select.innerHTML = '';
+        if (currentTrain && currentTrain.classes) {
+            currentTrain.classes.forEach(c => {
+                const opt = new Option(`${c.name} (₹${c.price.toLocaleString('en-IN')})`, c.id);
+                if (c.id === selectedClassId) opt.selected = true;
+                select.add(opt);
+            });
+            // Ensure selectedClassId matches an available class
+            if (!currentTrain.classes.some(c => c.id === selectedClassId)) {
+                selectedClassId = currentTrain.classes[0].id;
+                select.value = selectedClassId;
+            }
+        }
+    }
+
+    function onClassSwitched(newClassId) {
+        selectedClassId = newClassId;
+        selectedCoach = (newClassId === 'EC' || newClassId === '1A') ? 'E1' : 
+                        (newClassId === '2A' ? 'A1' : 
+                        (newClassId === '3A' || newClassId === '3E' ? 'B1' : 
+                        (newClassId === 'SL' ? 'S1' : 'C1')));
+        
+        document.getElementById('sumCoachText').textContent = selectedCoach;
+        renderPassengerList();
+        updatePricing();
+    }
+
+    function renderSummary() {
+        if (!currentTrain) return;
+        document.getElementById('sumFromStation').textContent = `${currentTrain.fromStationName} (${currentTrain.fromStationCode})`;
+        document.getElementById('sumToStation').textContent = `${currentTrain.toStationName} (${currentTrain.toStationCode})`;
+        document.getElementById('sumDeparturePlatform').textContent = currentTrain.departurePlatform;
+        document.getElementById('sumArrivalPlatform').textContent = currentTrain.arrivalPlatform;
+        document.getElementById('sumDepartureTime').textContent = currentTrain.departureTime;
+        document.getElementById('sumArrivalTime').textContent = currentTrain.arrivalTime;
+        document.getElementById('sumTrainNumber').textContent = `${currentTrain.trainNumber} ${currentTrain.name}`;
+        document.getElementById('sumDate').textContent = journeyDate;
+        document.getElementById('sumCoachText').textContent = selectedCoach;
+        document.getElementById('trainRatingBadge').textContent = `★ ${currentTrain.rating ? currentTrain.rating.toFixed(1) : '4.8'}`;
+    }
+
+    function renderPassengerList() {
+        const list = document.getElementById('passengerList');
+        document.getElementById('passengerCountBadge').textContent = `${passengers.length} Passenger${passengers.length !== 1 ? 's' : ''}`;
+
+        if (passengers.length === 0) {
+            list.innerHTML = `
+                <div class="text-center py-8 text-gray-400 text-sm border-2 border-dashed border-gray-300 dark:border-gray-800 rounded-2xl bg-white/40 dark:bg-black/20">
+                    <span class="material-symbols-outlined text-4xl text-gray-300 dark:text-gray-600 mb-2">person_add</span>
+                    <p class="font-medium text-gray-600 dark:text-gray-300">No passengers added yet.</p>
+                    <p class="text-xs text-gray-400 mt-1">Please enter passenger name, age, gender & preferences below and click <strong>+ Add Passenger</strong>.</p>
+                </div>
+            `;
+            return;
+        }
+
+        list.innerHTML = passengers.map((p, idx) => `
+            <div class="bg-gray-50 dark:bg-gray-900/60 border border-gray-200 dark:border-gray-800 rounded-xl p-4 flex items-center justify-between">
+                <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 rounded-full bg-emerald-100 dark:bg-emerald-950 text-primary flex items-center justify-center font-bold font-mono text-sm">
+                        ${p.firstName ? p.firstName[0].toUpperCase() : 'P'}${p.lastName ? p.lastName[0].toUpperCase() : ''}
+                    </div>
+                    <div>
+                        <h4 class="font-bold text-sm md:text-base text-gray-900 dark:text-gray-100">${p.firstName} ${p.lastName} <span class="text-xs font-mono text-gray-500 font-normal">(${p.age} Yrs • ${p.gender})</span></h4>
+                        <p class="text-xs font-mono text-gray-600 dark:text-gray-400 mt-0.5">
+                            Berth: <span class="font-bold text-gray-800 dark:text-gray-200">${p.berthPreference || 'WINDOW'}</span> • 
+                            Meal: <span class="font-bold text-gray-800 dark:text-gray-200">${p.mealPreference || 'VEG'}</span> • 
+                            Coach ${selectedCoach} / ${p.seatNumber || 'Auto'}
+                        </p>
+                    </div>
+                </div>
+                <div class="flex items-center gap-3">
+                    <span class="bg-emerald-100 dark:bg-emerald-950 text-emerald-700 dark:text-emerald-300 text-xs font-mono font-bold px-3 py-1 rounded-full flex items-center gap-1 border border-emerald-200 dark:border-emerald-800">
+                        <span class="material-symbols-outlined text-xs">check_circle</span> CNF
+                    </span>
+                    <button type="button" onclick="removePassenger(${idx})" class="text-gray-400 hover:text-red-500 p-1 rounded-full transition-colors" title="Remove Passenger">
+                        <span class="material-symbols-outlined text-lg">delete</span>
+                    </button>
+                </div>
+            </div>
+        `).join('');
+    }
+
+    async function updatePricing() {
+        const breakdownDiv = document.getElementById('priceBreakdownList');
+        if (passengers.length === 0) {
+            breakdownDiv.innerHTML = `<div class="text-xs text-gray-400 italic py-2">Add at least 1 passenger above to calculate fare</div>`;
+            document.getElementById('totalAmountText').textContent = '₹0.00';
+            return;
+        }
+
+        const payload = {
+            trainNumber: currentTrain ? currentTrain.trainNumber : '20608',
+            classId: selectedClassId,
+            passengers: passengers.map(p => ({
+                passengerType: p.age >= 60 ? 'SENIOR_CITIZEN' : (p.age < 12 ? 'CHILD' : 'ADULT'),
+                seatNumber: p.seatNumber
+            }))
+        };
+
+        try {
+            const res = await GoTicketAPI.calculatePrice(payload);
+            if (res.success && res.data) {
+                const data = res.data;
+                breakdownDiv.innerHTML = data.breakdown.map(item => `
+                    <div class="flex justify-between text-gray-600 dark:text-gray-400">
+                        <span>${item.label}</span>
+                        <span class="font-mono font-medium text-gray-900 dark:text-gray-100">${item.formattedAmount}</span>
+                    </div>
+                `).join('');
+
+                document.getElementById('totalAmountText').textContent = `₹${data.totalAmount.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+            }
+        } catch (e) {
+            console.error("Pricing calculation failed:", e);
+        }
+    }
+
+    document.getElementById('addPassengerForm').addEventListener('submit', (e) => {
+        e.preventDefault();
+        const fName = document.getElementById('inputFirstName').value.trim();
+        const lName = document.getElementById('inputLastName').value.trim();
+        const age = parseInt(document.getElementById('inputAge').value);
+        const gender = document.getElementById('inputGender').value;
+        const berthPref = document.getElementById('inputBerthPref').value;
+        const mealPref = document.getElementById('inputMealPref').value;
+
+        if (!fName || !lName || isNaN(age) || age <= 0) {
+            alert('Please enter valid passenger first name, last name, and age.');
+            return;
+        }
+
+        const nextSeatNum = (14 + passengers.length) + (passengers.length % 2 === 0 ? 'A' : 'B');
+
+        passengers.push({
+            id: 'P-' + Date.now(),
+            firstName: fName,
+            lastName: lName,
+            age: age,
+            gender: gender,
+            berthPreference: berthPref,
+            mealPreference: mealPref,
+            passengerType: age >= 60 ? 'SENIOR_CITIZEN' : (age < 12 ? 'CHILD' : 'ADULT'),
+            seatNumber: nextSeatNum,
+            status: 'CONFIRMED'
+        });
+
+        // Clear input fields for next entry
+        document.getElementById('inputFirstName').value = '';
+        document.getElementById('inputLastName').value = '';
+        document.getElementById('inputAge').value = '';
+        document.getElementById('inputFirstName').focus();
+
+        renderPassengerList();
+        updatePricing();
+    });
+
+    function removePassenger(idx) {
+        passengers.splice(idx, 1);
+        renderPassengerList();
+        updatePricing();
+    }
+
+    async function submitBooking() {
+        if (passengers.length === 0) {
+            alert('Please add at least one passenger using the form before proceeding to payment.');
+            document.getElementById('inputFirstName').focus();
+            return;
+        }
+
+        const email = document.getElementById('inputContactEmail').value.trim();
+        if (!email) {
+            alert('Please enter a valid contact email for your electronic ticket.');
+            document.getElementById('inputContactEmail').focus();
+            return;
+        }
+
+        const btn = document.getElementById('confirmBookingBtn');
+        btn.disabled = true;
+        btn.innerHTML = `<span class="material-symbols-outlined animate-spin text-sm">progress_activity</span> Generating 10-Digit PNR...`;
+
+        const paymentRadio = document.querySelector('input[name="paymentMode"]:checked');
+        const paymentMode = paymentRadio ? paymentRadio.value : 'UPI';
+
+        const bookingReq = {
+            trainNumber: currentTrain ? currentTrain.trainNumber : '20608',
+            journeyDate: journeyDate,
+            classId: selectedClassId,
+            car: selectedCoach,
+            paymentMode: paymentMode,
+            passengers: passengers,
+            contactEmail: email,
+            contactPhone: document.getElementById('inputContactPhone').value.trim() || '+91 98765 43210'
+        };
+
+        try {
+            const res = await GoTicketAPI.createBooking(bookingReq);
+            if (res.success && res.data) {
+                const pnr = res.data.pnr;
+                window.location.href = `/my-tickets.html?pnr=${encodeURIComponent(pnr)}&new=true`;
+            } else {
+                alert('Booking Failed: ' + (res.message || 'Unknown error'));
+                btn.disabled = false;
+                btn.innerHTML = `<span class="material-symbols-outlined">verified</span> Pay & Generate 10-Digit PNR`;
+            }
+        } catch (err) {
+            alert('Error: ' + err.message);
+            btn.disabled = false;
+            btn.innerHTML = `<span class="material-symbols-outlined">verified</span> Pay & Generate 10-Digit PNR`;
+        }
+    }
+
+    document.addEventListener('DOMContentLoaded', initPage);
+</script>
+</body>
+</html>

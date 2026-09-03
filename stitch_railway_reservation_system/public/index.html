@@ -1,0 +1,558 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8"/>
+    <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+    <title>GO TICKET - Book Trains. Track Journeys. Travel Smarter.</title>
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@500;600;700&display=swap" rel="stylesheet"/>
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+    <script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#059669",
+                        "primary-hover": "#047857",
+                        "accent-emerald": "#10B981",
+                        "emerald-light": "#ECFDF5",
+                        "surface-midnight": "#05070E",
+                        "surface-light": "#F8FAFC"
+                    },
+                    fontFamily: {
+                        "sans": ["Plus Jakarta Sans"],
+                        "mono": ["JetBrains Mono"]
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        html.light body {
+            background-color: #F8FAFC;
+            background-image: 
+                radial-gradient(circle at 15% 50%, rgba(16, 185, 129, 0.08) 0%, transparent 50%),
+                radial-gradient(circle at 85% 30%, rgba(5, 150, 105, 0.05) 0%, transparent 50%);
+            color: #0F172A;
+        }
+        html.light .glass-panel {
+            background-color: rgba(255, 255, 255, 0.94);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(0, 0, 0, 0.08);
+            box-shadow: 0 4px 24px -2px rgba(0, 0, 0, 0.06);
+        }
+        html.dark body {
+            background-color: #05070E;
+            background-image: 
+                radial-gradient(circle at 15% 50%, rgba(16, 185, 129, 0.06) 0%, transparent 50%),
+                radial-gradient(circle at 85% 30%, rgba(5, 150, 105, 0.04) 0%, transparent 50%);
+            color: #E1E2ED;
+        }
+        html.dark .glass-panel {
+            background-color: rgba(11, 14, 22, 0.7);
+            backdrop-filter: blur(24px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.4);
+        }
+
+        .class-option-card {
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+        .class-option-card:hover {
+            border-color: #059669;
+            transform: translateY(-2px);
+        }
+        .class-option-card.selected-class {
+            border-color: #059669 !important;
+            background-color: rgba(5, 150, 105, 0.08) !important;
+            box-shadow: 0 0 0 2px rgba(5, 150, 105, 0.25) !important;
+        }
+    </style>
+    <script src="/js/theme.js"></script>
+</head>
+<body class="font-sans min-h-screen flex flex-col transition-colors duration-300">
+<!-- TopNavBar -->
+<header class="glass-panel fixed top-0 left-0 w-full z-50 flex items-center justify-between px-6 md:px-16 h-20 transition-colors">
+    <div class="flex items-center gap-8">
+        <a href="/" class="flex items-center gap-2.5 group">
+            <!-- Exact GO TICKET Green Symbol -->
+            <div class="w-9 h-9 rounded-xl bg-primary text-white flex items-center justify-center shadow-md shadow-emerald-600/30 group-hover:scale-105 transition-transform">
+                <svg class="w-6 h-6 fill-current" viewBox="0 0 24 24">
+                    <path d="M22 10V6a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2v4c1.1 0 2 .9 2 2s-.9 2-2 2v4a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-4c-1.1 0-2-.9-2-2s.9-2 2-2zm-9 7.5h-2v-2h2v2zm0-4.5h-2v-2h2v2zm0-4.5h-2v-2h2v2z"/>
+                </svg>
+            </div>
+            <span class="text-2xl font-bold text-primary tracking-tight font-sans">GO TICKET</span>
+        </a>
+        <nav class="hidden md:flex gap-6 text-sm font-medium">
+            <a class="text-primary font-bold border-b-2 border-primary pb-1" href="/">Search Trains</a>
+            <a class="text-gray-500 hover:text-primary dark:text-gray-400 dark:hover:text-primary transition-colors" href="/my-tickets.html">Upcoming & Cancelled Trips</a>
+            <a class="text-gray-500 hover:text-primary dark:text-gray-400 dark:hover:text-primary transition-colors" href="#fleets">Vande Bharat & Rajdhani</a>
+        </nav>
+    </div>
+    
+    <div class="flex items-center gap-3">
+        <!-- Theme Toggle Button -->
+        <button onclick="GoTicketTheme.toggleTheme()" class="theme-toggle-btn flex items-center gap-1.5 px-3 py-1.5 rounded-full border border-gray-300 dark:border-gray-700 bg-white/50 dark:bg-black/30 hover:bg-black/5 dark:hover:bg-white/10 transition-all">
+            <span class="material-symbols-outlined text-[18px]">dark_mode</span>
+            <span class="text-xs font-mono">Dark</span>
+        </button>
+
+        <a href="/my-tickets.html" class="flex items-center gap-1.5 text-gray-700 dark:text-gray-200 hover:text-primary transition-colors text-xs font-mono px-3.5 py-1.5 rounded-full border border-gray-200 dark:border-gray-800 bg-gray-50 dark:bg-gray-900 font-bold">
+            <span class="material-symbols-outlined text-sm text-primary">confirmation_number</span>
+            <span class="hidden md:inline">My Trips & PNR</span>
+        </a>
+    </div>
+</header>
+
+<!-- Main Content -->
+<main class="flex-grow pt-[80px]">
+    <!-- Hero Section -->
+    <section class="relative w-full min-h-[580px] flex flex-col justify-center px-6 md:px-16 lg:px-24 py-12">
+        <div class="absolute inset-0 z-0 overflow-hidden">
+            <img alt="Indian High-Speed Rail" class="w-full h-full object-cover opacity-25 dark:opacity-15" src="https://lh3.googleusercontent.com/aida/AEtjO1UQHInjZVgCgGOFQEs9XM9-ACbtLIVtx_crrwm76S8-4KMbWwHz6yR54TPq9abJ0GcmcHXxJrFFBKp8fbBliGdRWgcg9SuMQdxwXwwXSvyyM-T0wL2yqDsJsBqNapu7QIPGvWMd9YSUOIWK2hyqNsPiyyfB3p_5UbbuYhbKzQG1kmykR5bTRHqAeKRJQ1vipVxJHiAodmZrusMXcrNkZ0GEF6FgRsAGFhEfKnTC2Dj2tmYBkg0C-IWbPyE"/>
+            <div class="absolute inset-0 bg-gradient-to-r from-background via-background/90 to-transparent"></div>
+        </div>
+
+        <div class="relative z-10 max-w-5xl">
+            <div class="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-emerald-100 text-emerald-800 dark:bg-emerald-950/80 dark:text-emerald-300 text-xs font-mono font-bold mb-4 border border-emerald-300 dark:border-emerald-800">
+                <span class="material-symbols-outlined text-sm">verified</span> GO TICKET • Real Indian Railways Network & Timetables
+            </div>
+            
+            <h1 class="text-4xl md:text-5xl font-bold mb-3 tracking-tight">Book Trains. Track Journeys. Travel Smarter.</h1>
+            <p class="text-base md:text-lg text-gray-600 dark:text-gray-300 mb-8 max-w-3xl">Search Indian Railways services, compare real train routes, check availability, view fares and punctuality, and manage your journey from booking to cancellation—all in one place.</p>
+
+            <!-- Search Widget with Class & Quota Filters -->
+            <div class="glass-panel rounded-2xl p-6 w-full transition-all shadow-lg">
+                <form id="searchForm" class="space-y-4">
+                    <!-- Row 1: Origin, Swap, Destination, Date -->
+                    <div class="grid grid-cols-1 md:grid-cols-12 gap-4 items-end">
+                        <!-- Origin -->
+                        <div class="md:col-span-4">
+                            <label class="block text-xs font-mono text-gray-500 uppercase mb-1.5 font-bold">Origin Station (From)</label>
+                            <div class="relative flex items-center">
+                                <span class="material-symbols-outlined absolute left-3 text-primary text-lg">location_on</span>
+                                <select id="fromStation" class="w-full bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-700 rounded-xl pl-10 pr-8 py-3 text-sm font-semibold focus:border-primary focus:ring-1 focus:ring-primary appearance-none">
+                                    <option value="">Select Origin Station</option>
+                                </select>
+                                <span class="material-symbols-outlined absolute right-3 text-gray-400 pointer-events-none">expand_more</span>
+                            </div>
+                        </div>
+
+                        <!-- Swap Button -->
+                        <div class="hidden md:flex md:col-span-1 justify-center pb-2">
+                            <button type="button" id="swapStationsBtn" class="w-10 h-10 rounded-full bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 shadow-sm flex items-center justify-center hover:bg-emerald-50 text-primary transition-all active:rotate-180" title="Swap Stations">
+                                <span class="material-symbols-outlined">swap_horiz</span>
+                            </button>
+                        </div>
+
+                        <!-- Destination -->
+                        <div class="md:col-span-4">
+                            <label class="block text-xs font-mono text-gray-500 uppercase mb-1.5 font-bold">Destination Station (To)</label>
+                            <div class="relative flex items-center">
+                                <span class="material-symbols-outlined absolute left-3 text-primary text-lg">location_on</span>
+                                <select id="toStation" class="w-full bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-700 rounded-xl pl-10 pr-8 py-3 text-sm font-semibold focus:border-primary focus:ring-1 focus:ring-primary appearance-none">
+                                    <option value="">Select Destination Station</option>
+                                </select>
+                                <span class="material-symbols-outlined absolute right-3 text-gray-400 pointer-events-none">expand_more</span>
+                            </div>
+                        </div>
+
+                        <!-- Date -->
+                        <div class="md:col-span-3">
+                            <label class="block text-xs font-mono text-gray-500 uppercase mb-1.5 font-bold">Journey Date</label>
+                            <div class="relative flex items-center">
+                                <span class="material-symbols-outlined absolute left-3 text-gray-400 text-lg">calendar_today</span>
+                                <input id="journeyDate" type="date" class="w-full bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-700 rounded-xl pl-10 pr-3 py-3 text-sm font-semibold focus:border-primary focus:ring-1 focus:ring-primary" value="2026-10-24"/>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Row 2: Travel Class Selector & Quota Selector -->
+                    <div class="grid grid-cols-1 md:grid-cols-12 gap-4 items-end pt-1">
+                        <!-- Travel Class Dropdown -->
+                        <div class="md:col-span-6">
+                            <label class="block text-xs font-mono text-gray-500 uppercase mb-1.5 font-bold flex items-center gap-1">
+                                <span class="material-symbols-outlined text-sm text-primary">airline_seat_recline_extra</span>
+                                Travel Class (AC / CC / SL / 2S / 1A / 2A / 3A)
+                            </label>
+                            <div class="relative flex items-center">
+                                <select id="travelClassFilter" class="w-full bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-700 rounded-xl px-4 py-3 text-sm font-semibold focus:border-primary focus:ring-1 focus:ring-primary appearance-none">
+                                    <option value="ALL">All Classes (All Travel Options)</option>
+                                    <option value="EC">Executive Class (EC) - Vande Bharat / Shatabdi</option>
+                                    <option value="CC">AC Chair Car (CC) - Intercity / Shatabdi</option>
+                                    <option value="1A">AC First Class (1A) - Rajdhani / Superfast</option>
+                                    <option value="2A">AC 2 Tier (2A) - Rajdhani / Express</option>
+                                    <option value="3A">AC 3 Tier (3A) - Superfast / Mail</option>
+                                    <option value="3E">AC 3 Economy (3E) - Garib Rath / Special</option>
+                                    <option value="SL">Sleeper Class (SL) - Non-AC Overnight</option>
+                                    <option value="2S">Second Sitting (2S) - Daytime Reserved</option>
+                                </select>
+                                <span class="material-symbols-outlined absolute right-3 text-gray-400 pointer-events-none">expand_more</span>
+                            </div>
+                        </div>
+
+                        <!-- Quota Selector -->
+                        <div class="md:col-span-3">
+                            <label class="block text-xs font-mono text-gray-500 uppercase mb-1.5 font-bold flex items-center gap-1">
+                                <span class="material-symbols-outlined text-sm text-primary">badge</span>
+                                Quota
+                            </label>
+                            <div class="relative flex items-center">
+                                <select id="quotaFilter" class="w-full bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-700 rounded-xl px-4 py-3 text-sm font-semibold focus:border-primary focus:ring-1 focus:ring-primary appearance-none">
+                                    <option value="GN">General Quota (GN)</option>
+                                    <option value="TQ">Tatkal Quota (TQ)</option>
+                                    <option value="LD">Ladies Quota (LD)</option>
+                                    <option value="SS">Senior Citizen (SS)</option>
+                                </select>
+                                <span class="material-symbols-outlined absolute right-3 text-gray-400 pointer-events-none">expand_more</span>
+                            </div>
+                        </div>
+
+                        <!-- Submit Search Button -->
+                        <div class="md:col-span-3">
+                            <button type="submit" class="w-full bg-[#059669] hover:bg-[#047857] text-white font-bold py-3.5 px-6 rounded-xl transition-all shadow-md hover:shadow-lg flex items-center justify-center gap-2 font-mono">
+                                <span class="material-symbols-outlined">search</span>
+                                Search Trains
+                            </button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </section>
+
+    <!-- Search Results Section -->
+    <section id="resultsSection" class="px-6 md:px-16 lg:px-24 py-8 max-w-7xl mx-auto">
+        <div class="flex flex-col sm:flex-row justify-between sm:items-center gap-2 mb-6">
+            <div>
+                <h2 id="resultsTitle" class="text-2xl font-bold">Available Trains & Schedules</h2>
+                <p id="resultsSubtitle" class="text-gray-500 dark:text-gray-400 text-sm">Click on your preferred class (EC, CC, 1A, 2A, 3A, SL, 2S) to select and book</p>
+            </div>
+            <div id="resultsCount" class="text-xs font-mono bg-gray-100 dark:bg-gray-800 px-3 py-1.5 rounded-full text-gray-600 dark:text-gray-300 self-start sm:self-auto font-bold">
+                Loading trains...
+            </div>
+        </div>
+
+        <div id="trainList" class="grid grid-cols-1 gap-6">
+            <!-- Dynamic Train Cards inserted via JS -->
+        </div>
+    </section>
+
+    <!-- Popular Corridors -->
+    <section class="px-6 md:px-16 lg:px-24 py-12 max-w-7xl mx-auto border-t border-gray-200 dark:border-gray-800">
+        <h2 class="text-2xl font-bold mb-6">Popular Superfast Indian Rail Corridors</h2>
+        <div id="recentSearchesGrid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+            <!-- Dynamic Recent Searches inserted via JS -->
+        </div>
+    </section>
+
+    <!-- Fleets Showcase -->
+    <section id="fleets" class="px-6 md:px-16 lg:px-24 py-12 max-w-7xl mx-auto">
+        <div class="glass-panel rounded-2xl p-8 relative overflow-hidden bg-gradient-to-r from-emerald-950 via-gray-900 to-gray-950 text-white shadow-xl">
+            <div class="relative z-10 max-w-xl">
+                <span class="text-xs font-mono text-emerald-400 uppercase font-bold tracking-widest block mb-2">Vande Bharat 2.0 & Rajdhani Fleet</span>
+                <h3 class="text-3xl font-bold mb-3 text-white">160 km/h Semi-High Speed Mobility</h3>
+                <p class="text-gray-300 mb-6 text-sm leading-relaxed">Experience ultra-smooth riding, Kavach safety, rotatable executive seats, bio-vacuum touchless restrooms, and regional Indian cuisine on GO TICKET.</p>
+                <button onclick="quickSelect('MAS', 'SBC')" class="bg-primary hover:bg-primary-hover text-white font-bold py-3 px-6 rounded-xl transition-all flex items-center gap-2 font-mono">
+                    Book Chennai → Bengaluru Vande Bharat
+                    <span class="material-symbols-outlined text-sm">arrow_forward</span>
+                </button>
+            </div>
+        </div>
+    </section>
+</main>
+
+<footer class="glass-panel border-t py-8 px-6 text-center text-xs font-mono text-gray-500">
+    <p>© 2026 GO TICKET - Indian Railways Reservation Platform. All Rights Reserved.</p>
+</footer>
+
+<script src="/js/api.js"></script>
+<script>
+    let allStations = [];
+    let selectedTrainClasses = {}; // Map of trainNumber -> selectedClassId
+
+    async function initPage() {
+        try {
+            const res = await GoTicketAPI.getStations();
+            if (res.success) {
+                allStations = res.data;
+                populateStationDropdowns();
+            }
+
+            const recentRes = await GoTicketAPI.getRecentSearches();
+            if (recentRes.success) {
+                renderRecentSearches(recentRes.data);
+            }
+
+            loadTrains();
+        } catch (e) {
+            console.error("Init failed:", e);
+        }
+    }
+
+    function populateStationDropdowns() {
+        const fromSelect = document.getElementById('fromStation');
+        const toSelect = document.getElementById('toStation');
+        
+        allStations.forEach(s => {
+            const label = `${s.name} (${s.code}) - ${s.city}, ${s.state}`;
+            const opt1 = new Option(label, s.code);
+            const opt2 = new Option(label, s.code);
+            fromSelect.add(opt1);
+            toSelect.add(opt2);
+        });
+
+        fromSelect.value = 'MAS';
+        toSelect.value = 'SBC';
+    }
+
+    function renderRecentSearches(searches) {
+        const grid = document.getElementById('recentSearchesGrid');
+        grid.innerHTML = searches.map(s => `
+            <div onclick="quickSelect('${s.fromCode}', '${s.toCode}')" class="glass-panel rounded-xl p-5 hover:border-primary/50 transition-all cursor-pointer group shadow-sm hover:shadow-md">
+                <div class="flex justify-between items-start mb-3">
+                    <span class="text-xs font-mono text-gray-400 uppercase flex items-center gap-1">
+                        <span class="material-symbols-outlined text-sm">history</span> ${s.timeAgo}
+                    </span>
+                    <span class="text-primary font-bold text-sm">→</span>
+                </div>
+                <div class="flex items-center gap-2 mb-2 font-mono text-lg font-bold">
+                    <span>${s.fromCode}</span>
+                    <span class="text-primary text-base font-bold">→</span>
+                    <span>${s.toCode}</span>
+                </div>
+                <div class="text-xs text-gray-500 font-medium">${s.fromName} → ${s.toName}</div>
+            </div>
+        `).join('');
+    }
+
+    async function loadTrains(from = '', to = '', date = '') {
+        const list = document.getElementById('trainList');
+        const countBadge = document.getElementById('resultsCount');
+        const classFilter = document.getElementById('travelClassFilter').value;
+
+        list.innerHTML = `<div class="p-8 text-center text-gray-400"><span class="material-symbols-outlined animate-spin text-3xl">progress_activity</span><p class="mt-2">Connecting to Indian Railways Timetable...</p></div>`;
+
+        try {
+            const res = await GoTicketAPI.searchTrains(from, to, date);
+            if (res.success) {
+                let trains = res.data;
+                
+                // If user selected a specific class filter (e.g. EC, CC, 1A, 2A, 3A, SL, 2S)
+                if (classFilter && classFilter !== 'ALL') {
+                    trains = trains.filter(t => t.classes && t.classes.some(c => c.id.toUpperCase() === classFilter.toUpperCase()));
+                }
+
+                countBadge.textContent = `${trains.length} Trains Running`;
+                if (trains.length === 0) {
+                    list.innerHTML = `
+                        <div class="glass-panel rounded-2xl p-12 text-center text-gray-500">
+                            <span class="material-symbols-outlined text-5xl text-gray-300 mb-2">search_off</span>
+                            <h3 class="text-lg font-bold">No trains matching the selected class filter (${classFilter})</h3>
+                            <p class="text-sm mt-1">Try choosing "All Classes" or searching between major junctions like Chennai (MAS) → Bengaluru (SBC).</p>
+                        </div>
+                    `;
+                    return;
+                }
+
+                const selectedDate = document.getElementById('journeyDate').value || '2026-10-24';
+                list.innerHTML = trains.map(t => renderTrainCard(t, selectedDate, classFilter)).join('');
+            }
+        } catch (err) {
+            list.innerHTML = `<div class="p-6 text-red-500 text-center">Failed to load trains: ${err.message}</div>`;
+        }
+    }
+
+    function renderTrainCard(t, date, preferredClass) {
+        // Default selected class for this train
+        const defaultClass = (preferredClass && preferredClass !== 'ALL' && t.classes.some(c => c.id === preferredClass))
+            ? preferredClass : (t.classes[0] ? t.classes[0].id : 'CC');
+        
+        selectedTrainClasses[t.trainNumber] = defaultClass;
+
+        return `
+            <div class="glass-panel rounded-2xl p-6 transition-all hover:shadow-md border border-gray-200 dark:border-gray-800" id="trainCard_${t.trainNumber}">
+                <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-6">
+                    <!-- Left: Train Info & Times -->
+                    <div class="flex-1 space-y-4">
+                        <div class="flex flex-wrap items-center gap-3">
+                            <span class="bg-emerald-100 dark:bg-emerald-950 text-primary text-xs font-mono font-bold px-2.5 py-1 rounded-md border border-emerald-200 dark:border-emerald-800">#${t.trainNumber}</span>
+                            <span class="font-bold text-lg">${t.name}</span>
+                            
+                            <!-- Train Rating Badge -->
+                            <span class="inline-flex items-center gap-1 bg-amber-50 dark:bg-amber-950 text-amber-700 dark:text-amber-300 text-xs font-mono font-bold px-2.5 py-0.5 rounded-full border border-amber-200 dark:border-amber-800">
+                                <span>★</span> ${t.rating ? t.rating.toFixed(1) : '4.8'} <span class="text-[10px] opacity-75">(${t.totalRatings || '2.4k'})</span>
+                            </span>
+
+                            <!-- Punctuality Score -->
+                            <span class="text-xs bg-emerald-50 dark:bg-emerald-950/70 text-emerald-700 dark:text-emerald-300 px-2 py-0.5 rounded-full font-mono flex items-center gap-1 border border-emerald-200 dark:border-emerald-800">
+                                <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span> ${t.punctualityScore || 97}% On-Time
+                            </span>
+                        </div>
+
+                        <!-- Schedule Timeline (Single Clean Arrow) -->
+                        <div class="flex items-center gap-6">
+                            <div>
+                                <div class="text-2xl font-mono font-bold text-primary">${t.departureTime}</div>
+                                <div class="text-sm font-semibold">${t.fromStationName} (${t.fromStationCode})</div>
+                                <div class="text-xs font-mono text-gray-400">${t.departurePlatform}</div>
+                            </div>
+
+                            <div class="flex-1 max-w-xs flex flex-col items-center">
+                                <span class="text-xs font-mono text-gray-500 mb-1">${t.duration}</span>
+                                <div class="w-full flex items-center justify-center gap-2">
+                                    <div class="flex-grow h-px bg-gray-300 dark:bg-gray-700"></div>
+                                    <span class="text-primary font-bold text-lg">→</span>
+                                    <div class="flex-grow h-px bg-gray-300 dark:bg-gray-700"></div>
+                                </div>
+                                <span class="text-[10px] font-mono text-gray-400 mt-1">${t.distanceKm} km • Direct</span>
+                            </div>
+
+                            <div>
+                                <div class="text-2xl font-mono font-bold">${t.arrivalTime}</div>
+                                <div class="text-sm font-semibold">${t.toStationName} (${t.toStationCode})</div>
+                                <div class="text-xs font-mono text-gray-400">${t.arrivalPlatform}</div>
+                            </div>
+                        </div>
+
+                        <!-- Intermediate Route Stops -->
+                        ${t.intermediateStops && t.intermediateStops.length > 0 ? `
+                            <div class="text-xs font-mono text-gray-500 flex items-center gap-2 flex-wrap pt-1">
+                                <span class="text-[10px] uppercase font-bold text-gray-400">Route:</span>
+                                <span>${t.intermediateStops.join(' → ')}</span>
+                            </div>
+                        ` : ''}
+                    </div>
+
+                    <!-- Right: Choose Class (AC, SL, CC, etc.) & Live Availability -->
+                    <div class="lg:w-96 flex flex-col justify-between border-t lg:border-t-0 lg:border-l border-gray-200 dark:border-gray-800 pt-4 lg:pt-0 lg:pl-6">
+                        <div class="space-y-2 mb-4">
+                            <div class="flex justify-between items-center">
+                                <span class="text-xs font-mono text-gray-500 uppercase font-bold">Choose Class:</span>
+                                <span class="text-[11px] font-mono text-primary font-semibold" id="selectedClassLabel_${t.trainNumber}">Selected: ${defaultClass}</span>
+                            </div>
+
+                            <!-- Interactive Clickable Class Options -->
+                            <div class="grid grid-cols-2 gap-2">
+                                ${t.classes.map(c => {
+                                    const isSelected = c.id === defaultClass;
+                                    let availText = `AVL ${c.availableSeats}`;
+                                    let availClass = 'text-emerald-700 dark:text-emerald-300 bg-emerald-50 dark:bg-emerald-950/80 border-emerald-200 dark:border-emerald-800';
+                                    
+                                    if (c.availabilityStatus === 'FILLING_FAST') {
+                                        availText = `Filling Fast (${c.availableSeats})`;
+                                        availClass = 'text-amber-700 dark:text-amber-300 bg-amber-50 dark:bg-amber-950/80 border-amber-200 dark:border-amber-800';
+                                    } else if (c.availabilityStatus === 'FEW_SEATS') {
+                                        availText = `Few Seats (${c.availableSeats})`;
+                                        availClass = 'text-orange-700 dark:text-orange-300 bg-orange-50 dark:bg-orange-950/80 border-orange-200 dark:border-orange-800';
+                                    } else if (c.availabilityStatus === 'RAC') {
+                                        availText = `RAC ${c.racSeats || 12}`;
+                                        availClass = 'text-blue-700 dark:text-blue-300 bg-blue-50 dark:bg-blue-950/80 border-blue-200 dark:border-blue-800';
+                                    } else if (c.availabilityStatus === 'WL') {
+                                        availText = `WL ${c.waitlistSeats || 8}`;
+                                        availClass = 'text-rose-700 dark:text-rose-300 bg-rose-50 dark:bg-rose-950/80 border-rose-200 dark:border-rose-800';
+                                    }
+
+                                    return `
+                                        <div onclick="selectClassForTrain('${t.trainNumber}', '${c.id}', '${date}', this)"
+                                             class="class-option-card ${isSelected ? 'selected-class' : ''} text-xs border border-gray-200 dark:border-gray-800 rounded-xl p-3 bg-gray-50 dark:bg-gray-900 flex flex-col justify-between relative"
+                                             data-class-id="${c.id}"
+                                             data-train-number="${t.trainNumber}">
+                                            <div class="flex justify-between items-start">
+                                                <div class="font-bold text-gray-800 dark:text-gray-200">${c.name}</div>
+                                                <span class="material-symbols-outlined text-xs text-primary font-bold ${isSelected ? 'inline' : 'hidden'} checkmark-icon">check_circle</span>
+                                            </div>
+                                            <div class="text-primary font-mono font-bold text-sm my-1">₹${c.price.toLocaleString('en-IN')}</div>
+                                            <div class="text-[10px] font-mono font-bold px-1.5 py-0.5 rounded border inline-block ${availClass}">
+                                                ${availText}
+                                            </div>
+                                        </div>
+                                    `;
+                                }).join('')}
+                            </div>
+                        </div>
+
+                        <!-- Book Ticket Button linked to the currently selected class -->
+                        <a id="bookButton_${t.trainNumber}"
+                           href="/manage-passengers.html?train=${encodeURIComponent(t.trainNumber)}&date=${encodeURIComponent(date)}&class=${encodeURIComponent(defaultClass)}" 
+                           class="w-full bg-[#059669] hover:bg-[#047857] text-white font-bold py-3 px-4 rounded-xl transition-all text-center flex items-center justify-center gap-2 shadow-md font-mono text-sm active:scale-95">
+                            Book in <span id="btnClassText_${t.trainNumber}">${defaultClass}</span>
+                            <span>→</span>
+                        </a>
+                    </div>
+                </div>
+            </div>
+        `;
+    }
+
+    // Dynamic Class Selector on each Train Card
+    function selectClassForTrain(trainNumber, classId, date, element) {
+        selectedTrainClasses[trainNumber] = classId;
+        
+        // Remove selected-class from siblings
+        const card = document.getElementById(`trainCard_${trainNumber}`);
+        if (card) {
+            const classCards = card.querySelectorAll('.class-option-card');
+            classCards.forEach(c => {
+                c.classList.remove('selected-class');
+                const check = c.querySelector('.checkmark-icon');
+                if (check) check.classList.add('hidden');
+            });
+
+            // Highlight current selection
+            element.classList.add('selected-class');
+            const check = element.querySelector('.checkmark-icon');
+            if (check) check.classList.remove('hidden');
+
+            // Update Label & Button Link
+            const label = document.getElementById(`selectedClassLabel_${trainNumber}`);
+            if (label) label.textContent = `Selected: ${classId}`;
+
+            const btnText = document.getElementById(`btnClassText_${trainNumber}`);
+            if (btnText) btnText.textContent = classId;
+
+            const bookBtn = document.getElementById(`bookButton_${trainNumber}`);
+            if (bookBtn) {
+                bookBtn.href = `/manage-passengers.html?train=${encodeURIComponent(trainNumber)}&date=${encodeURIComponent(date)}&class=${encodeURIComponent(classId)}`;
+            }
+        }
+    }
+
+    function quickSelect(from, to) {
+        document.getElementById('fromStation').value = from;
+        document.getElementById('toStation').value = to;
+        const date = document.getElementById('journeyDate').value;
+        loadTrains(from, to, date);
+        document.getElementById('resultsSection').scrollIntoView({ behavior: 'smooth' });
+    }
+
+    document.getElementById('searchForm').addEventListener('submit', (e) => {
+        e.preventDefault();
+        const from = document.getElementById('fromStation').value;
+        const to = document.getElementById('toStation').value;
+        const date = document.getElementById('journeyDate').value;
+        loadTrains(from, to, date);
+        document.getElementById('resultsSection').scrollIntoView({ behavior: 'smooth' });
+    });
+
+    document.getElementById('travelClassFilter').addEventListener('change', () => {
+        const from = document.getElementById('fromStation').value;
+        const to = document.getElementById('toStation').value;
+        const date = document.getElementById('journeyDate').value;
+        loadTrains(from, to, date);
+    });
+
+    document.getElementById('swapStationsBtn').addEventListener('click', () => {
+        const from = document.getElementById('fromStation');
+        const to = document.getElementById('toStation');
+        const tmp = from.value;
+        from.value = to.value;
+        to.value = tmp;
+    });
+
+    document.addEventListener('DOMContentLoaded', initPage);
+</script>
+</body>
+</html>

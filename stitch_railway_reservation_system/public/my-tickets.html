@@ -1,0 +1,864 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8"/>
+    <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+    <title>GO TICKET - 10-Digit PNR Status, Trips & Refund Management</title>
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet"/>
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+    
+    <!-- QRCode Generator CDN -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+    <!-- Html2Canvas & jsPDF for high-definition PDF export -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+
+    <script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#059669",
+                        "primary-hover": "#047857",
+                        "accent-emerald": "#10B981",
+                        "emerald-light": "#ECFDF5",
+                        "amber-warning": "#F59E0B",
+                        "emerald-success": "#10B981",
+                        "ruby-error": "#EF4444"
+                    },
+                    fontFamily: {
+                        "sans": ["Plus Jakarta Sans"],
+                        "mono": ["JetBrains Mono"]
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        html.light body {
+            background-color: #F8FAFC;
+            background-image: 
+                radial-gradient(circle at 15% 50%, rgba(16, 185, 129, 0.08) 0%, transparent 50%),
+                radial-gradient(circle at 85% 30%, rgba(5, 150, 105, 0.05) 0%, transparent 50%);
+            color: #0F172A;
+        }
+        html.light .glass-panel {
+            background-color: rgba(255, 255, 255, 0.94);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(0, 0, 0, 0.08);
+            box-shadow: 0 4px 20px -2px rgba(0, 0, 0, 0.05);
+        }
+        html.dark body {
+            background-color: #05070E;
+            background-image: 
+                radial-gradient(circle at 15% 50%, rgba(16, 185, 129, 0.06) 0%, transparent 50%),
+                radial-gradient(circle at 85% 30%, rgba(5, 150, 105, 0.04) 0%, transparent 50%);
+            color: #E1E2ED;
+        }
+        html.dark .glass-panel {
+            background-color: rgba(11, 14, 22, 0.65);
+            backdrop-filter: blur(24px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.4);
+        }
+
+        /* Specific standalone PDF export container styling to avoid text clipping */
+        .pdf-export-box {
+            box-sizing: border-box !important;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif !important;
+            -webkit-font-smoothing: antialiased !important;
+            text-rendering: optimizeLegibility !important;
+        }
+        .pdf-export-box * {
+            box-sizing: border-box !important;
+        }
+    </style>
+    <script src="/js/theme.js"></script>
+</head>
+<body class="font-sans min-h-screen flex flex-col transition-colors duration-300">
+<!-- TopNavBar -->
+<header class="glass-panel fixed top-0 left-0 w-full z-50 flex items-center justify-between px-6 md:px-16 h-20 transition-colors">
+    <div class="flex items-center gap-8">
+        <a href="/" class="flex items-center gap-2.5 group">
+            <!-- Exact GO TICKET Green Symbol -->
+            <div class="w-9 h-9 rounded-xl bg-primary text-white flex items-center justify-center shadow-md shadow-emerald-600/30 group-hover:scale-105 transition-transform">
+                <svg class="w-6 h-6 fill-current" viewBox="0 0 24 24">
+                    <path d="M22 10V6a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2v4c1.1 0 2 .9 2 2s-.9 2-2 2v4a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-4c-1.1 0-2-.9-2-2s.9-2 2-2zm-9 7.5h-2v-2h2v2zm0-4.5h-2v-2h2v2zm0-4.5h-2v-2h2v2z"/>
+                </svg>
+            </div>
+            <span class="text-2xl font-bold text-primary tracking-tight font-sans">GO TICKET</span>
+        </a>
+        <nav class="hidden md:flex gap-6 text-sm font-medium">
+            <a class="text-gray-500 hover:text-primary dark:text-gray-400 dark:hover:text-primary transition-colors" href="/">Search Trains</a>
+            <a class="text-primary font-bold border-b-2 border-primary pb-1" href="/my-tickets.html">Upcoming & Cancelled Trips</a>
+        </nav>
+    </div>
+    <div class="flex items-center gap-3">
+        <!-- Theme Toggle Button -->
+        <button onclick="GoTicketTheme.toggleTheme()" class="theme-toggle-btn flex items-center gap-1.5 px-3 py-1.5 rounded-full border border-gray-300 dark:border-gray-700 bg-white/50 dark:bg-black/30 hover:bg-black/5 dark:hover:bg-white/10 transition-all">
+            <span class="material-symbols-outlined text-[18px]">dark_mode</span>
+            <span class="text-xs font-mono">Dark</span>
+        </button>
+
+        <!-- PNR Lookup Search -->
+        <div class="relative w-64">
+            <span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm">search</span>
+            <input id="pnrSearchInput" class="w-full bg-gray-100 dark:bg-gray-900 border border-gray-300 dark:border-gray-700 rounded-full py-1.5 pl-9 pr-4 text-xs font-mono focus:outline-none focus:border-primary transition-all" placeholder="Search 10-Digit PNR..." type="text"/>
+        </div>
+    </div>
+</header>
+
+<main class="pt-[100px] pb-16 px-6 max-w-7xl mx-auto w-full">
+    <!-- Success Alert for new booking -->
+    <div id="newBookingAlert" class="hidden mb-6 bg-emerald-50 dark:bg-emerald-950/80 border border-emerald-300 dark:border-emerald-800 text-emerald-800 dark:text-emerald-200 px-6 py-4 rounded-2xl flex items-center justify-between shadow-sm">
+        <div class="flex items-center gap-3">
+            <span class="material-symbols-outlined text-emerald-600 text-2xl">check_circle</span>
+            <div>
+                <h4 class="font-bold">Indian Railways Ticket Confirmed on GO TICKET!</h4>
+                <p class="text-xs">Your 10-Digit PNR <strong id="newPnrText" class="font-mono text-emerald-700 dark:text-emerald-300 font-bold"></strong> is active. Confirmation SMS & Digital E-Ticket generated.</p>
+            </div>
+        </div>
+        <button onclick="document.getElementById('newBookingAlert').classList.add('hidden')" class="text-emerald-700 hover:text-emerald-900">
+            <span class="material-symbols-outlined text-sm">close</span>
+        </button>
+    </div>
+
+    <!-- Header Section -->
+    <div class="flex flex-col md:flex-row md:items-end justify-between gap-4 mb-8">
+        <div>
+            <h1 class="text-3xl font-bold mb-1">My Bookings & PNR Tracker</h1>
+            <p class="text-sm text-gray-500 dark:text-gray-400">Live Indian Railways PNR enquiry, seat verification, and cancellation refund tracking.</p>
+        </div>
+        <!-- Tabs (Upcoming / All / Cancelled) -->
+        <div class="flex bg-gray-200/80 dark:bg-gray-800/80 p-1 rounded-xl w-full md:w-auto font-mono text-xs">
+            <button onclick="filterBookings('UPCOMING')" id="tabUpcoming" class="flex-1 md:flex-none px-5 py-2.5 rounded-lg bg-white dark:bg-gray-900 font-bold shadow-sm transition-all text-primary">
+                Upcoming Trips (<span id="upcomingBadgeCount">0</span>)
+            </button>
+            <button onclick="filterBookings('ALL')" id="tabAll" class="flex-1 md:flex-none px-5 py-2.5 rounded-lg text-gray-600 dark:text-gray-400 hover:text-primary transition-all">
+                All Trips
+            </button>
+            <button onclick="filterBookings('CANCELLED')" id="tabCancelled" class="flex-1 md:flex-none px-5 py-2.5 rounded-lg text-gray-600 dark:text-gray-400 hover:text-primary transition-all">
+                Cancelled Trips (<span id="cancelledBadgeCount">0</span>)
+            </button>
+        </div>
+    </div>
+
+    <!-- Bookings Grid -->
+    <div id="bookingsGrid" class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <!-- Dynamic Bookings loaded via API -->
+    </div>
+</main>
+
+<!-- Cancellation & Refund Preview Modal -->
+<div id="cancelModal" class="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm hidden flex items-center justify-center p-4">
+    <div class="bg-white dark:bg-gray-900 rounded-3xl max-w-lg w-full overflow-hidden shadow-2xl border border-gray-200 dark:border-gray-800 animate-in fade-in zoom-in duration-200">
+        <!-- Header -->
+        <div class="bg-rose-50 dark:bg-rose-950/80 border-b border-rose-200 dark:border-rose-800 p-6 flex items-center justify-between">
+            <div class="flex items-center gap-3">
+                <span class="material-symbols-outlined text-rose-600 text-2xl">cancel</span>
+                <div>
+                    <h3 class="font-bold text-lg text-rose-900 dark:text-rose-200">Cancel Indian Railway Ticket</h3>
+                    <p class="text-xs text-rose-700 dark:text-rose-300 font-mono">PNR: <span id="cancelModalPnr"></span></p>
+                </div>
+            </div>
+            <button onclick="closeCancelModal()" class="text-gray-400 hover:text-gray-600">
+                <span class="material-symbols-outlined">close</span>
+            </button>
+        </div>
+
+        <!-- Body -->
+        <div class="p-6 space-y-5">
+            <!-- Refund Amount Callout -->
+            <div class="bg-emerald-50 dark:bg-emerald-950/80 border border-emerald-200 dark:border-emerald-800 rounded-2xl p-4 text-center">
+                <span class="text-xs font-mono uppercase text-emerald-800 dark:text-emerald-300 font-bold block mb-1">Expected Refund Credit</span>
+                <span id="cancelModalRefundAmount" class="text-3xl font-mono font-bold text-emerald-700 dark:text-emerald-300">You will receive ₹0.00 refund</span>
+            </div>
+
+            <!-- Detailed Breakdown -->
+            <div class="space-y-2 text-sm border-t border-b border-gray-200 dark:border-gray-800 py-3">
+                <div class="flex justify-between">
+                    <span class="text-gray-500">Original Total Fare</span>
+                    <span id="cancelModalOriginalFare" class="font-mono font-bold">₹0.00</span>
+                </div>
+                <div class="flex justify-between text-rose-600">
+                    <span>Cancellation / Clerkage Deduction</span>
+                    <span id="cancelModalDeduction" class="font-mono font-bold">-₹0.00</span>
+                </div>
+                <div class="flex justify-between text-gray-500 text-xs">
+                    <span>Non-refundable Convenience Fee</span>
+                    <span id="cancelModalFee" class="font-mono">-₹35.40</span>
+                </div>
+            </div>
+
+            <div class="text-xs font-mono text-gray-500 space-y-1">
+                <p>• Refund will be initiated to your original payment method (UPI / Bank Account).</p>
+                <p>• Expected turnaround timeline: <strong>3 - 5 Banking Working Days</strong>.</p>
+                <p>• A unique <strong>Refund ID</strong> will be generated upon confirmation.</p>
+            </div>
+        </div>
+
+        <!-- Actions -->
+        <div class="bg-gray-50 dark:bg-gray-800/80 p-6 flex justify-end gap-3 border-t border-gray-200 dark:border-gray-800">
+            <button onclick="closeCancelModal()" class="px-5 py-2.5 rounded-xl border border-gray-300 dark:border-gray-700 text-xs font-bold text-gray-700 dark:text-gray-300 hover:bg-gray-100 transition-colors font-mono">
+                Keep My Booking
+            </button>
+            <button id="confirmCancelButton" onclick="executeCancellation()" class="px-5 py-2.5 rounded-xl bg-rose-600 hover:bg-rose-700 text-white text-xs font-bold transition-all shadow-sm font-mono flex items-center gap-1.5">
+                <span class="material-symbols-outlined text-sm">done</span>
+                Confirm Cancellation & Refund
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- Refund Details Modal -->
+<div id="refundDetailsModal" class="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm hidden flex items-center justify-center p-4">
+    <div class="bg-white dark:bg-gray-900 rounded-3xl max-w-lg w-full overflow-hidden shadow-2xl border border-gray-200 dark:border-gray-800 animate-in fade-in zoom-in duration-200">
+        <div class="bg-emerald-700 text-white p-6 flex items-center justify-between">
+            <div class="flex items-center gap-3">
+                <span class="material-symbols-outlined text-3xl">currency_rupee</span>
+                <div>
+                    <h3 class="font-bold text-lg">Official Refund Record</h3>
+                    <p class="text-xs opacity-80 font-mono" id="refundModalPnr"></p>
+                </div>
+            </div>
+            <button onclick="closeRefundModal()" class="text-white/80 hover:text-white">
+                <span class="material-symbols-outlined">close</span>
+            </button>
+        </div>
+
+        <div id="refundModalContent" class="p-6 space-y-4">
+            <!-- Dynamically populated refund details -->
+        </div>
+
+        <div class="bg-gray-50 dark:bg-gray-800/80 p-6 flex justify-between items-center border-t border-gray-200 dark:border-gray-800">
+            <button id="downloadRefundReceiptBtn" onclick="downloadRefundReceiptPDF()" class="bg-primary hover:bg-primary-hover text-white text-xs font-bold py-2.5 px-4 rounded-xl flex items-center gap-1.5 transition-colors font-mono">
+                <span class="material-symbols-outlined text-sm">download</span> Download Refund Receipt (.PDF)
+            </button>
+            <button onclick="closeRefundModal()" class="text-xs font-mono font-bold text-gray-500 hover:text-gray-800">
+                Close
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- E-Ticket Details & PDF Modal -->
+<div id="ticketModal" class="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm hidden flex items-center justify-center p-4 overflow-y-auto">
+    <div class="bg-white dark:bg-gray-900 rounded-3xl max-w-2xl w-full overflow-hidden shadow-2xl border border-gray-200 dark:border-gray-800 my-8">
+        
+        <!-- CRISP STANDALONE CARD SPECIALLY DESIGNED FOR PERFECT NO-CLIP PDF RENDERING -->
+        <div id="pdfExportCard" class="pdf-export-box" style="background: #ffffff; color: #111827; padding: 0; margin: 0; width: 100%;">
+            
+            <!-- Green Top Header with Official Inlined SVG GO TICKET Logo -->
+            <div style="background: linear-gradient(135deg, #047857 0%, #059669 100%); color: #ffffff; padding: 24px 28px; position: relative;">
+                <button onclick="closeTicketModal()" class="no-pdf" style="position: absolute; top: 16px; right: 16px; background: rgba(255,255,255,0.15); border: none; border-radius: 50%; color: #ffffff; cursor: pointer; width: 32px; height: 32px; display: flex; align-items: center; justify-content: center;">
+                    <span class="material-symbols-outlined" style="font-size: 18px;">close</span>
+                </button>
+                
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+                    <div style="display: flex; align-items: center; gap: 12px;">
+                        <div style="width: 42px; height: 42px; background: #ffffff; border-radius: 12px; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
+                            <svg width="28" height="28" viewBox="0 0 24 24" fill="#059669">
+                                <path d="M22 10V6a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2v4c1.1 0 2 .9 2 2s-.9 2-2 2v4a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-4c-1.1 0-2-.9-2-2s.9-2 2-2zm-9 7.5h-2v-2h2v2zm0-4.5h-2v-2h2v2zm0-4.5h-2v-2h2v2z"/>
+                            </svg>
+                        </div>
+                        <div>
+                            <div style="font-size: 20px; font-weight: 800; letter-spacing: -0.5px; line-height: 1.2; color: #ffffff;">GO TICKET • INDIAN RAILWAYS</div>
+                            <div style="font-size: 11px; font-weight: 600; opacity: 0.95; letter-spacing: 1px; color: #a7f3d0; margin-top: 2px;">ELECTRONIC RESERVATION SLIP (ERS)</div>
+                        </div>
+                    </div>
+                    <span id="modalStatusBadge" style="background: #ffffff; color: #059669; font-size: 13px; font-weight: 800; padding: 6px 14px; border-radius: 20px; letter-spacing: 0.5px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">CNF</span>
+                </div>
+
+                <div style="display: flex; justify-content: space-between; align-items: flex-end; border-top: 1px solid rgba(255,255,255,0.2); padding-top: 14px;">
+                    <div>
+                        <div style="font-size: 11px; font-weight: 600; text-transform: uppercase; color: #d1fae5; letter-spacing: 0.5px;">Train Service</div>
+                        <div id="modalTrainName" style="font-size: 22px; font-weight: 800; color: #ffffff; margin-top: 2px; line-height: 1.2;">20608 Vande Bharat Express</div>
+                    </div>
+                    <div style="text-align: right;">
+                        <div style="font-size: 11px; font-weight: 600; text-transform: uppercase; color: #d1fae5; letter-spacing: 0.5px;">10-Digit PNR</div>
+                        <div id="modalPnr" style="font-size: 22px; font-weight: 800; font-family: 'JetBrains Mono', monospace; color: #ffffff; letter-spacing: 1.5px; margin-top: 2px; line-height: 1.2;">246-8910432</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Body Area with Explicit Padding & Robust Font Heights -->
+            <div style="padding: 24px 28px; background: #ffffff;">
+                
+                <!-- Station Schedule Timeline Block (No Clipping) -->
+                <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 16px; padding: 18px 24px; display: grid; grid-template-columns: 1fr 140px 1fr; align-items: center; text-align: center; margin-bottom: 20px;">
+                    <div style="text-align: left;">
+                        <div id="modalFromCode" style="font-size: 26px; font-weight: 800; font-family: 'JetBrains Mono', monospace; color: #059669; line-height: 1.1;">MAS</div>
+                        <div id="modalFromName" style="font-size: 13px; font-weight: 600; color: #334155; margin-top: 4px; padding-bottom: 2px; line-height: 1.3;">MGR Chennai Central</div>
+                        <div id="modalDepartTime" style="font-size: 15px; font-weight: 700; color: #0f172a; margin-top: 4px; line-height: 1.2;">05:50 • <span id="modalDepartPlat" style="font-size: 12px; color: #64748b; font-weight: 500;">Platform 5</span></div>
+                    </div>
+                    
+                    <div style="display: flex; flex-col; align-items: center; justify-content: center; text-align: center;">
+                        <div style="font-size: 24px; font-weight: 900; color: #059669; line-height: 1;">→</div>
+                        <div id="modalDate" style="font-size: 12px; font-weight: 700; color: #475569; margin-top: 6px; font-family: 'JetBrains Mono', monospace;">Oct 24, 2026</div>
+                    </div>
+
+                    <div style="text-align: right;">
+                        <div id="modalToCode" style="font-size: 26px; font-weight: 800; font-family: 'JetBrains Mono', monospace; color: #059669; line-height: 1.1;">SBC</div>
+                        <div id="modalToName" style="font-size: 13px; font-weight: 600; color: #334155; margin-top: 4px; padding-bottom: 2px; line-height: 1.3;">KSR Bengaluru</div>
+                        <div id="modalArrivalTime" style="font-size: 15px; font-weight: 700; color: #0f172a; margin-top: 4px; line-height: 1.2;">10:20 • <span id="modalArrivalPlat" style="font-size: 12px; color: #64748b; font-weight: 500;">Platform 1</span></div>
+                    </div>
+                </div>
+
+                <!-- Coach, Berth & Class Info -->
+                <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 16px; padding: 16px 20px; display: grid; grid-template-columns: 1fr 1fr 1.5fr; gap: 12px; text-align: center; margin-bottom: 20px;">
+                    <div>
+                        <div style="font-size: 10px; font-weight: 700; color: #64748b; text-transform: uppercase; letter-spacing: 0.5px;">Coach</div>
+                        <div id="modalCar" style="font-size: 18px; font-weight: 800; color: #0f172a; margin-top: 2px; font-family: 'JetBrains Mono', monospace;">E1</div>
+                    </div>
+                    <div>
+                        <div style="font-size: 10px; font-weight: 700; color: #64748b; text-transform: uppercase; letter-spacing: 0.5px;">Berth / Seat</div>
+                        <div id="modalSeat" style="font-size: 18px; font-weight: 800; color: #059669; margin-top: 2px; font-family: 'JetBrains Mono', monospace;">14A</div>
+                    </div>
+                    <div>
+                        <div style="font-size: 10px; font-weight: 700; color: #64748b; text-transform: uppercase; letter-spacing: 0.5px;">Class (Quota)</div>
+                        <div id="modalClass" style="font-size: 14px; font-weight: 700; color: #0f172a; margin-top: 4px; padding-bottom: 2px; line-height: 1.3;">Executive Class (EC)</div>
+                    </div>
+                </div>
+
+                <!-- Passenger Details Manifest (Clean Rows) -->
+                <div style="margin-bottom: 20px;">
+                    <div style="font-size: 11px; font-weight: 700; color: #64748b; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 8px;">PASSENGER DETAILS & MANIFEST</div>
+                    <div id="modalPassengerList" style="display: flex; flex-direction: column; gap: 8px;">
+                        <!-- Dynamically filled with user-entered passengers -->
+                    </div>
+                </div>
+
+                <!-- Cancellation Policy Notice -->
+                <div style="background: #ecfdf5; border: 1px solid #a7f3d0; border-radius: 14px; padding: 12px 18px; margin-bottom: 20px;">
+                    <div style="font-size: 10px; font-weight: 700; color: #065f46; text-transform: uppercase; letter-spacing: 0.5px;">CANCELLATION & REFUND POLICY</div>
+                    <div id="modalRefundStatusLine" style="font-size: 12px; font-weight: 600; color: #047857; margin-top: 3px; font-family: 'JetBrains Mono', monospace;">
+                        Refund: Not Applicable — Ticket is Active & Confirmed
+                    </div>
+                </div>
+
+                <!-- High-Resolution QR Code Block -->
+                <div style="border-top: 1px dashed #cbd5e1; padding-top: 16px; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center;">
+                    <div style="padding: 6px; background: #ffffff; border: 1px solid #e2e8f0; border-radius: 12px; display: inline-block;">
+                        <div id="modalQrContainer" style="width: 110px; height: 110px; display: flex; align-items: center; justify-content: center;"></div>
+                    </div>
+                    <div id="modalQrHash" style="font-size: 11px; font-weight: 600; color: #64748b; font-family: 'JetBrains Mono', monospace; margin-top: 8px;">
+                        IRCTC TTE QR Verification • Valid Original Govt Photo ID Required
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- Footer: Total Fare & Download Button -->
+            <div style="background: #f1f5f9; padding: 18px 28px; display: flex; justify-content: space-between; align-items: center; border-top: 1px solid #e2e8f0;">
+                <div style="font-size: 16px; font-weight: 800; color: #059669; font-family: 'JetBrains Mono', monospace;" id="modalTotalPaid">Paid: ₹1,977.90</div>
+                <button id="downloadPdfButton" onclick="downloadCurrentTicketPDF()" class="no-pdf" style="background: #059669; color: #ffffff; border: none; font-size: 13px; font-weight: 700; padding: 12px 24px; border-radius: 12px; cursor: pointer; display: flex; align-items: center; gap: 8px; font-family: 'JetBrains Mono', monospace; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1);">
+                    <span class="material-symbols-outlined" style="font-size: 16px;">download</span> Download Ticket (.PDF)
+                </button>
+            </div>
+        </div>
+
+    </div>
+</div>
+
+<script src="/js/api.js"></script>
+<script>
+    let currentFilter = 'UPCOMING';
+    let allBookings = [];
+    let pendingCancelPnr = null;
+    let activeModalBooking = null;
+
+    async function initPage() {
+        const params = new URLSearchParams(window.location.search);
+        const highlightedPnr = params.get('pnr');
+        const isNew = params.get('new');
+
+        if (isNew && highlightedPnr) {
+            document.getElementById('newBookingAlert').classList.remove('hidden');
+            document.getElementById('newPnrText').textContent = highlightedPnr;
+        }
+
+        await loadBookings();
+
+        if (isNew && highlightedPnr) {
+            const found = allBookings.find(b => b.pnr.replace('-', '') === highlightedPnr.replace('-', ''));
+            if (found) {
+                openTicketModal(found);
+            }
+        }
+    }
+
+    async function loadBookings() {
+        const grid = document.getElementById('bookingsGrid');
+        grid.innerHTML = `<div class="p-8 text-center text-gray-400 col-span-2"><span class="material-symbols-outlined animate-spin text-3xl">progress_activity</span><p class="mt-2">Connecting to Indian Railways Database...</p></div>`;
+
+        try {
+            const res = await GoTicketAPI.getBookings('ALL');
+            if (res.success) {
+                allBookings = res.data || [];
+                
+                const upcomingCount = allBookings.filter(b => b.status !== 'CANCELLED').length;
+                const cancelledCount = allBookings.filter(b => b.status === 'CANCELLED').length;
+                document.getElementById('upcomingBadgeCount').textContent = upcomingCount;
+                document.getElementById('cancelledBadgeCount').textContent = cancelledCount;
+
+                filterBookings(currentFilter);
+            }
+        } catch (e) {
+            grid.innerHTML = `<div class="p-6 text-red-500 text-center col-span-2">Failed to load bookings: ${e.message}</div>`;
+        }
+    }
+
+    function renderBookings(list) {
+        const grid = document.getElementById('bookingsGrid');
+        if (list.length === 0) {
+            grid.innerHTML = `
+                <div class="glass-panel rounded-2xl p-12 text-center text-gray-400 col-span-2">
+                    <span class="material-symbols-outlined text-5xl text-gray-300 mb-2">confirmation_number</span>
+                    <h3 class="text-lg font-bold text-gray-700 dark:text-gray-300">No ${currentFilter.toLowerCase()} trips found</h3>
+                    <p class="text-sm mt-1">You have no ${currentFilter.toLowerCase()} train reservations on GO TICKET.</p>
+                    <a href="/" class="inline-block mt-4 bg-primary text-white text-sm font-bold px-6 py-2.5 rounded-xl hover:bg-primary-hover transition-colors font-mono">Search & Book Trains →</a>
+                </div>
+            `;
+            return;
+        }
+
+        grid.innerHTML = list.map(b => {
+            const isConfirmed = b.status === 'CONFIRMED';
+            const isWaitlist = b.status === 'WAITLIST';
+            const isCancelled = b.status === 'CANCELLED';
+
+            let statusBadge = `<span class="inline-flex items-center gap-1 px-3 py-1 rounded-full bg-emerald-50 dark:bg-emerald-950 text-emerald-700 dark:text-emerald-300 text-xs font-mono font-bold border border-emerald-200 dark:border-emerald-800"><span class="material-symbols-outlined text-sm">check_circle</span> CNF</span>`;
+            if (isWaitlist) {
+                statusBadge = `<span class="inline-flex items-center gap-1 px-3 py-1 rounded-full bg-amber-50 dark:bg-amber-950 text-amber-700 dark:text-amber-300 text-xs font-mono font-bold border border-amber-200 dark:border-amber-800"><span class="material-symbols-outlined text-sm">schedule</span> WL</span>`;
+            } else if (isCancelled) {
+                statusBadge = `<span class="inline-flex items-center gap-1 px-3 py-1 rounded-full bg-rose-50 dark:bg-rose-950 text-rose-700 dark:text-rose-300 text-xs font-mono font-bold border border-rose-200 dark:border-rose-800"><span class="material-symbols-outlined text-sm">cancel</span> CANCELLED</span>`;
+            }
+
+            const passDetails = (b.passengers && b.passengers.length > 0) ? b.passengers.map(p => 
+                `${p.firstName} ${p.lastName} (${p.age || 30} Yrs • ${p.gender || 'MALE'}) | Berth: ${p.berthPreference || 'WINDOW'} • Meal: ${p.mealPreference || 'VEG'} • Coach ${b.car || 'E1'} / ${p.seatNumber || '14A'}`
+            ).join('<br/>') : 'Passenger details recorded';
+
+            return `
+                <div class="glass-panel rounded-2xl p-6 relative overflow-hidden flex flex-col justify-between transition-all hover:shadow-md border ${isCancelled ? 'opacity-90 border-rose-200 dark:border-rose-900/50' : ''}">
+                    <!-- Header -->
+                    <div class="flex justify-between items-center mb-6 pb-3 border-b border-gray-200 dark:border-gray-800">
+                        <div class="flex items-center gap-3">
+                            ${statusBadge}
+                            <span class="text-xs font-mono text-gray-500 uppercase font-bold tracking-wider">PNR: ${b.pnr}</span>
+                        </div>
+                        <div class="text-right">
+                            <span class="text-sm font-bold block">${b.trainName}</span>
+                            <span class="text-xs font-mono text-gray-400">#${b.trainNumber}</span>
+                        </div>
+                    </div>
+
+                    <!-- Journey Timeline (Single Clean Arrow) -->
+                    <div class="relative pl-6 mb-4">
+                        <div class="absolute left-2 top-2 bottom-2 w-0.5 ${isCancelled ? 'bg-gray-300 dark:bg-gray-700' : 'bg-primary'}"></div>
+                        <div class="relative mb-6">
+                            <div class="absolute -left-6 top-1 w-3 h-3 rounded-full ${isCancelled ? 'bg-gray-400' : 'bg-primary'} ring-4 ring-emerald-100 dark:ring-emerald-950"></div>
+                            <div class="flex justify-between items-start">
+                                <div>
+                                    <span class="text-base font-bold block">${b.fromStationName}</span>
+                                    <span class="text-xs font-mono text-gray-400">${b.fromStationCode} • ${b.departurePlatform}</span>
+                                </div>
+                                <div class="text-right">
+                                    <span class="text-base font-mono font-bold text-primary">${b.departureTime}</span>
+                                    <span class="text-xs font-mono text-gray-400 block">${b.journeyDate}</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="relative">
+                            <div class="absolute -left-6 top-1 w-3 h-3 rounded-full bg-gray-400"></div>
+                            <div class="flex justify-between items-start">
+                                <div>
+                                    <span class="text-base font-bold block">${b.toStationName}</span>
+                                    <span class="text-xs font-mono text-gray-400">${b.toStationCode} • ${b.arrivalPlatform}</span>
+                                </div>
+                                <div class="text-right">
+                                    <span class="text-base font-mono font-bold">${b.arrivalTime}</span>
+                                    <span class="text-xs font-mono text-gray-400 block">${b.journeyDate}</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Passenger Details summary box -->
+                    <div class="bg-gray-50 dark:bg-gray-900/60 rounded-xl p-3 mb-4 text-xs font-mono border border-gray-200 dark:border-gray-800">
+                        <span class="text-[10px] uppercase font-bold text-gray-400 block mb-1">PASSENGER DETAILS (${(b.passengers || []).length}):</span>
+                        <div class="text-gray-700 dark:text-gray-300 leading-relaxed font-semibold">
+                            ${passDetails}
+                        </div>
+                    </div>
+
+                    <!-- Refund Section on Card -->
+                    ${isCancelled ? `
+                        <div class="bg-rose-50 dark:bg-rose-950/40 rounded-xl p-3 mb-4 text-xs font-mono border border-rose-200 dark:border-rose-900 text-rose-800 dark:text-rose-200">
+                            <div class="flex justify-between font-bold">
+                                <span>REFUND: ₹${(b.refundDetails ? b.refundDetails.refundAmount : b.totalAmount - 215.40).toFixed(2)}</span>
+                                <span class="uppercase">${b.refundDetails ? b.refundDetails.refundStatus : 'INITIATED'}</span>
+                            </div>
+                            <div class="text-[11px] text-gray-600 dark:text-gray-400 mt-1">
+                                Ref ID: <strong>${b.refundDetails ? b.refundDetails.refundId : 'RFD-2026-849120'}</strong> • Expected in 3-5 Working Days
+                            </div>
+                        </div>
+                    ` : `
+                        <div class="bg-emerald-50/50 dark:bg-emerald-950/20 rounded-xl p-2.5 mb-4 text-[11px] font-mono text-emerald-700 dark:text-emerald-300 border border-emerald-200/50 dark:border-emerald-900/40">
+                            ✓ Active Reservation • Full e-Ticket Ready
+                        </div>
+                    `}
+
+                    <!-- Footer: Seats & Action -->
+                    <div class="mt-auto pt-4 border-t border-gray-200 dark:border-gray-800 flex flex-wrap items-center justify-between gap-4">
+                        <div class="flex gap-6 text-xs">
+                            <div>
+                                <span class="text-[10px] font-mono text-gray-400 uppercase block">Coach</span>
+                                <span class="font-mono font-bold">${b.car || '--'}</span>
+                            </div>
+                            <div>
+                                <span class="text-[10px] font-mono text-gray-400 uppercase block">Seat / Berth</span>
+                                <span class="font-mono font-bold text-primary">${b.seatNumbers ? b.seatNumbers.join(', ') : '--'}</span>
+                            </div>
+                            <div>
+                                <span class="text-[10px] font-mono text-gray-400 uppercase block">Class</span>
+                                <span class="font-bold">${b.travelClass}</span>
+                            </div>
+                            <div>
+                                <span class="text-[10px] font-mono text-gray-400 uppercase block">${isCancelled ? 'Net Refund' : 'Total Fare'}</span>
+                                <span class="font-mono font-bold ${isCancelled ? 'text-rose-600' : 'text-primary'}">₹${(isCancelled && b.refundDetails ? b.refundDetails.refundAmount : b.totalAmount).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+                            </div>
+                        </div>
+
+                        <div class="flex gap-2">
+                            ${!isCancelled ? `
+                                <button onclick="promptCancellation('${b.pnr}')" class="px-3 py-2 rounded-xl border border-rose-300 dark:border-rose-800 text-xs font-bold text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/40 transition-colors font-mono flex items-center gap-1">
+                                    <span class="material-symbols-outlined text-xs">cancel</span> Cancel
+                                </button>
+                                <button onclick='openTicketModal(${JSON.stringify(b)})' class="px-4 py-2 rounded-xl bg-primary hover:bg-primary-hover text-white text-xs font-bold transition-all shadow-sm flex items-center gap-1.5 font-mono">
+                                    <span class="material-symbols-outlined text-sm">confirmation_number</span> View & Download E-Ticket
+                                </button>
+                            ` : `
+                                <button onclick='openRefundModal(${JSON.stringify(b)})' class="px-4 py-2 rounded-xl border border-emerald-300 dark:border-emerald-800 text-xs font-bold text-emerald-700 dark:text-emerald-300 hover:bg-emerald-50 dark:hover:bg-emerald-950/40 transition-colors font-mono flex items-center gap-1.5">
+                                    <span class="material-symbols-outlined text-sm">info</span> View Refund Details
+                                </button>
+                            `}
+                        </div>
+                    </div>
+                </div>
+            `;
+        }).join('');
+    }
+
+    function filterBookings(filter) {
+        currentFilter = filter;
+        document.getElementById('tabUpcoming').className = filter === 'UPCOMING' ? 'flex-1 md:flex-none px-5 py-2.5 rounded-lg bg-white dark:bg-gray-900 font-bold shadow-sm transition-all text-primary' : 'flex-1 md:flex-none px-5 py-2.5 rounded-lg text-gray-600 dark:text-gray-400 hover:text-primary transition-all';
+        document.getElementById('tabAll').className = filter === 'ALL' ? 'flex-1 md:flex-none px-5 py-2.5 rounded-lg bg-white dark:bg-gray-900 font-bold shadow-sm transition-all text-primary' : 'flex-1 md:flex-none px-5 py-2.5 rounded-lg text-gray-600 dark:text-gray-400 hover:text-primary transition-all';
+        document.getElementById('tabCancelled').className = filter === 'CANCELLED' ? 'flex-1 md:flex-none px-5 py-2.5 rounded-lg bg-white dark:bg-gray-900 font-bold shadow-sm transition-all text-primary' : 'flex-1 md:flex-none px-5 py-2.5 rounded-lg text-gray-600 dark:text-gray-400 hover:text-primary transition-all';
+        
+        let filtered = allBookings;
+        if (filter === 'UPCOMING') {
+            filtered = allBookings.filter(b => b.status !== 'CANCELLED');
+        } else if (filter === 'CANCELLED') {
+            filtered = allBookings.filter(b => b.status === 'CANCELLED');
+        }
+        renderBookings(filtered);
+    }
+
+    async function promptCancellation(pnr) {
+        pendingCancelPnr = pnr;
+        document.getElementById('cancelModalPnr').textContent = pnr;
+        
+        try {
+            const res = await GoTicketAPI.previewCancellation(pnr);
+            if (res.success && res.data) {
+                const p = res.data;
+                document.getElementById('cancelModalRefundAmount').textContent = p.refundNotice || `You will receive ₹${p.finalRefundAmount.toFixed(2)} refund`;
+                document.getElementById('cancelModalOriginalFare').textContent = `₹${p.originalFare.toFixed(2)}`;
+                document.getElementById('cancelModalDeduction').textContent = `-₹${p.cancellationFee.toFixed(2)}`;
+                document.getElementById('cancelModalFee').textContent = `-₹${p.nonRefundableConvenienceFee.toFixed(2)}`;
+                document.getElementById('cancelModal').classList.remove('hidden');
+            }
+        } catch (e) {
+            alert('Failed to calculate cancellation refund: ' + e.message);
+        }
+    }
+
+    function closeCancelModal() {
+        document.getElementById('cancelModal').classList.add('hidden');
+        pendingCancelPnr = null;
+    }
+
+    async function executeCancellation() {
+        if (!pendingCancelPnr) return;
+        const btn = document.getElementById('confirmCancelButton');
+        btn.disabled = true;
+        btn.innerHTML = `<span class="material-symbols-outlined animate-spin text-sm">progress_activity</span> Processing Refund...`;
+
+        try {
+            const res = await GoTicketAPI.cancelBooking(pendingCancelPnr);
+            if (res.success) {
+                closeCancelModal();
+                alert(`Cancellation Confirmed! Refund has been initiated.`);
+                await loadBookings();
+                filterBookings('CANCELLED');
+            } else {
+                alert('Error: ' + res.message);
+            }
+        } catch (e) {
+            alert('Cancellation failed: ' + e.message);
+        } finally {
+            btn.disabled = false;
+            btn.innerHTML = `<span class="material-symbols-outlined text-sm">done</span> Confirm Cancellation & Refund`;
+        }
+    }
+
+    function openRefundModal(b) {
+        document.getElementById('refundModalPnr').textContent = `PNR: ${b.pnr} • ${b.trainNumber} ${b.trainName}`;
+        const ref = b.refundDetails || {};
+        activeModalBooking = b;
+        
+        const content = document.getElementById('refundModalContent');
+        content.innerHTML = `
+            <div id="refundReceiptTarget" style="background: #ffffff; color: #111827; padding: 12px; border-radius: 12px; font-family: sans-serif;">
+                <div style="background: #ecfdf5; border: 1px solid #a7f3d0; border-radius: 14px; padding: 16px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+                    <div>
+                        <div style="font-size: 11px; font-weight: 700; color: #065f46; text-transform: uppercase;">Refund Reference ID</div>
+                        <div style="font-size: 18px; font-weight: 800; color: #047857; font-family: monospace; margin-top: 2px;">${ref.refundId || 'RFD-2026-849120'}</div>
+                    </div>
+                    <span style="background: #059669; color: #ffffff; font-size: 12px; font-weight: 700; padding: 6px 14px; border-radius: 20px;">
+                        ${ref.refundStatus || 'INITIATED'}
+                    </span>
+                </div>
+
+                <div style="border-top: 1px solid #e2e8f0; border-bottom: 1px solid #e2e8f0; padding: 14px 0; font-size: 14px; display: flex; flex-direction: column; gap: 8px;">
+                    <div style="display: flex; justify-content: space-between;">
+                        <span style="color: #64748b;">Original Total Fare</span>
+                        <span style="font-weight: 700; font-family: monospace;">₹${(ref.originalFare || b.totalAmount).toFixed(2)}</span>
+                    </div>
+                    <div style="display: flex; justify-content: space-between; color: #dc2626;">
+                        <span>IRCTC Cancellation Charges</span>
+                        <span style="font-weight: 700; font-family: monospace;">-₹${(ref.cancellationCharge || 180).toFixed(2)}</span>
+                    </div>
+                    <div style="display: flex; justify-content: space-between; color: #64748b; font-size: 13px;">
+                        <span>Non-refundable Convenience Fee</span>
+                        <span style="font-family: monospace;">-₹${(ref.convenienceFeeDeducted || 35.40).toFixed(2)}</span>
+                    </div>
+                    <div style="display: flex; justify-content: space-between; font-size: 17px; font-weight: 800; color: #059669; border-top: 1px dashed #cbd5e1; padding-top: 10px; margin-top: 4px;">
+                        <span>Final Refund Amount</span>
+                        <span style="font-family: monospace;">₹${(ref.refundAmount || (b.totalAmount - 215.40)).toFixed(2)}</span>
+                    </div>
+                </div>
+
+                <div style="font-size: 12px; color: #64748b; margin-top: 14px; display: flex; flex-direction: column; gap: 6px; font-family: monospace;">
+                    <div style="display: flex; justify-content: space-between;">
+                        <span>Payment Source:</span>
+                        <span style="font-weight: 700; color: #0f172a;">${ref.paymentMode || b.paymentMode || 'Original UPI / Bank Account'}</span>
+                    </div>
+                    <div style="display: flex; justify-content: space-between;">
+                        <span>Expected Timeline:</span>
+                        <span style="font-weight: 700; color: #059669;">${ref.expectedTimeline || '3 - 5 Banking Working Days'}</span>
+                    </div>
+                    <div style="display: flex; justify-content: space-between;">
+                        <span>Cancellation Date:</span>
+                        <span>${b.cancelledAt ? new Date(b.cancelledAt).toLocaleString() : new Date().toLocaleString()}</span>
+                    </div>
+                    <div style="display: flex; justify-content: space-between;">
+                        <span>UTR / Bank Ref:</span>
+                        <span style="font-weight: 700;">${ref.refundTransactionRef || 'TXN-UPI-8F921A'}</span>
+                    </div>
+                </div>
+            </div>
+        `;
+
+        document.getElementById('refundDetailsModal').classList.remove('hidden');
+    }
+
+    function closeRefundModal() {
+        document.getElementById('refundDetailsModal').classList.add('hidden');
+    }
+
+    function openTicketModal(b) {
+        activeModalBooking = b;
+        document.getElementById('modalTrainName').textContent = b.trainNumber + ' ' + b.trainName;
+        document.getElementById('modalPnr').textContent = b.pnr;
+        document.getElementById('modalStatusBadge').textContent = b.status === 'CONFIRMED' ? 'CNF' : b.status;
+        document.getElementById('modalFromCode').textContent = b.fromStationCode;
+        document.getElementById('modalFromName').textContent = b.fromStationName;
+        document.getElementById('modalDepartTime').textContent = b.departureTime;
+        document.getElementById('modalDepartPlat').textContent = b.departurePlatform || 'Platform 1';
+        document.getElementById('modalToCode').textContent = b.toStationCode;
+        document.getElementById('modalToName').textContent = b.toStationName;
+        document.getElementById('modalArrivalTime').textContent = b.arrivalTime;
+        document.getElementById('modalArrivalPlat').textContent = b.arrivalPlatform || 'Platform 1';
+        document.getElementById('modalDate').textContent = b.journeyDate;
+        document.getElementById('modalCar').textContent = b.car || 'E1';
+        document.getElementById('modalSeat').textContent = (b.seatNumbers && b.seatNumbers.length > 0) ? b.seatNumbers.join(', ') : '14A';
+        document.getElementById('modalClass').textContent = b.travelClass;
+        document.getElementById('modalTotalPaid').textContent = `Paid: ₹${b.totalAmount.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+
+        // Dynamic passenger manifest
+        const pList = document.getElementById('modalPassengerList');
+        const passArray = (b.passengers && b.passengers.length > 0) ? b.passengers : [
+            { firstName: 'Passenger', lastName: '1', age: 30, gender: 'MALE', berthPreference: 'WINDOW', mealPreference: 'VEG', seatNumber: '14A', status: 'CONFIRMED' }
+        ];
+
+        pList.innerHTML = passArray.map((p, idx) => `
+            <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px; padding: 12px 16px; display: flex; justify-content: space-between; align-items: center;">
+                <div>
+                    <div style="font-size: 14px; font-weight: 700; color: #0f172a; line-height: 1.3;">
+                        ${p.firstName} ${p.lastName} <span style="font-size: 12px; color: #64748b; font-weight: 500;">(${p.age || 30} Yrs • ${p.gender || 'MALE'})</span>
+                    </div>
+                    <div style="font-size: 12px; color: #475569; font-family: 'JetBrains Mono', monospace; margin-top: 3px; line-height: 1.3;">
+                        Berth: <strong style="color: #0f172a;">${p.berthPreference || 'WINDOW'}</strong> • Meal: <strong style="color: #0f172a;">${p.mealPreference || 'VEG'}</strong> • Coach: <strong style="color: #0f172a;">${b.car || 'E1'}</strong> / Seat: <strong style="color: #059669;">${p.seatNumber || (14 + idx) + 'A'}</strong>
+                    </div>
+                </div>
+                <div>
+                    <span style="background: #ecfdf5; color: #047857; font-size: 11px; font-weight: 800; padding: 4px 12px; border-radius: 20px; border: 1px solid #a7f3d0; font-family: 'JetBrains Mono', monospace;">
+                        ${p.status === 'CONFIRMED' ? 'CNF' : (p.status || 'CNF')}
+                    </span>
+                </div>
+            </div>
+        `).join('');
+
+        const refLine = document.getElementById('modalRefundStatusLine');
+        if (b.status === 'CANCELLED') {
+            refLine.innerHTML = `<span style="color: #dc2626; font-weight: 800;">Ticket Cancelled</span> • Refund of <strong>₹${(b.refundDetails ? b.refundDetails.refundAmount : b.totalAmount - 215.40).toFixed(2)}</strong> initiated to ${b.paymentMode || 'UPI'} (Ref: ${b.refundDetails ? b.refundDetails.refundId : 'RFD-2026'})`;
+        } else {
+            refLine.textContent = 'Refund: Not Applicable — Ticket is Active & Confirmed';
+        }
+
+        // GENERATE REAL DYNAMIC QR CODE VIA QRCode.js
+        const qrContainer = document.getElementById('modalQrContainer');
+        qrContainer.innerHTML = '';
+        const qrString = `IRCTC:PNR=${b.pnr}:TRN=${b.trainNumber}:DATE=${b.journeyDate}:HASH=${Math.abs(b.pnr.hashCode ? b.pnr.hashCode() : 482910)}`;
+        try {
+            new QRCode(qrContainer, {
+                text: qrString,
+                width: 105,
+                height: 105,
+                colorDark : "#000000",
+                colorLight : "#ffffff",
+                correctLevel : QRCode.CorrectLevel.M
+            });
+        } catch (e) {
+            console.warn("QR code generation fallback:", e);
+        }
+
+        document.getElementById('modalQrHash').textContent = `IRCTC:PNR=${b.pnr}:TRN=${b.trainNumber} • Valid Govt ID Required`;
+        document.getElementById('ticketModal').classList.remove('hidden');
+    }
+
+    function closeTicketModal() {
+        document.getElementById('ticketModal').classList.add('hidden');
+    }
+
+    // --- ULTRA-CRISP HIGH-RESOLUTION PDF DOWNLOAD (SCALE 3, PERFECT FONTS, NO CLIPPING) ---
+    async function downloadCurrentTicketPDF() {
+        if (!activeModalBooking) return;
+        const btn = document.getElementById('downloadPdfButton');
+        const originalText = btn.innerHTML;
+
+        try {
+            btn.disabled = true;
+            btn.innerHTML = `<span class="material-symbols-outlined animate-spin text-sm">progress_activity</span> Generating Clean ERS PDF...`;
+
+            const renderArea = document.getElementById('pdfExportCard');
+            
+            // Render high DPI snapshot with zero clipping
+            const canvas = await html2canvas(renderArea, {
+                scale: 3,
+                useCORS: true,
+                backgroundColor: '#ffffff',
+                logging: false,
+                scrollY: 0,
+                windowWidth: 780,
+                ignoreElements: (element) => element.classList.contains('no-pdf')
+            });
+
+            const imgData = canvas.toDataURL('image/jpeg', 0.98);
+            const { jsPDF } = window.jspdf;
+            const pdf = new jsPDF({
+                orientation: 'portrait',
+                unit: 'mm',
+                format: 'a4'
+            });
+
+            const pdfWidth = 190; // 10mm left & right margins
+            const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
+
+            pdf.addImage(imgData, 'JPEG', 10, 10, pdfWidth, pdfHeight);
+            
+            const pnrClean = activeModalBooking.pnr.replace(/[^0-9]/g, '');
+            pdf.save(`Ticket_${pnrClean || 'GO_TICKET'}.pdf`);
+        } catch (err) {
+            console.error("PDF Generation failed:", err);
+            alert("PDF generation failed: " + err.message);
+        } finally {
+            btn.disabled = false;
+            btn.innerHTML = originalText;
+        }
+    }
+
+    async function downloadRefundReceiptPDF() {
+        if (!activeModalBooking) return;
+        const btn = document.getElementById('downloadRefundReceiptBtn');
+        const originalText = btn.innerHTML;
+
+        try {
+            btn.disabled = true;
+            btn.innerHTML = `<span class="material-symbols-outlined animate-spin text-sm">progress_activity</span> Generating Receipt PDF...`;
+
+            const renderArea = document.getElementById('refundReceiptTarget');
+            const canvas = await html2canvas(renderArea, {
+                scale: 3,
+                useCORS: true,
+                backgroundColor: '#ffffff',
+                logging: false
+            });
+
+            const imgData = canvas.toDataURL('image/jpeg', 0.98);
+            const { jsPDF } = window.jspdf;
+            const pdf = new jsPDF({
+                orientation: 'portrait',
+                unit: 'mm',
+                format: 'a4'
+            });
+
+            const pdfWidth = 190;
+            const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
+
+            pdf.addImage(imgData, 'JPEG', 10, 10, pdfWidth, pdfHeight);
+
+            const pnrClean = activeModalBooking.pnr.replace(/[^0-9]/g, '');
+            pdf.save(`Refund_Receipt_${pnrClean || 'REC'}.pdf`);
+        } catch (err) {
+            console.error("Refund PDF Generation failed:", err);
+            alert("Receipt generation failed: " + err.message);
+        } finally {
+            btn.disabled = false;
+            btn.innerHTML = originalText;
+        }
+    }
+
+    document.getElementById('pnrSearchInput').addEventListener('input', (e) => {
+        const query = e.target.value.trim().toUpperCase().replace('-', '');
+        if (!query) {
+            filterBookings(currentFilter);
+            return;
+        }
+        const filtered = allBookings.filter(b => 
+            b.pnr.replace('-', '').includes(query) || 
+            b.fromStationName.toUpperCase().includes(query) || 
+            b.toStationName.toUpperCase().includes(query) ||
+            b.trainNumber.toUpperCase().includes(query) ||
+            b.trainName.toUpperCase().includes(query)
+        );
+        renderBookings(filtered);
+    });
+
+    document.addEventListener('DOMContentLoaded', initPage);
+</script>
+</body>
+</html>

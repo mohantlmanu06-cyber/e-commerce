@@ -1,0 +1,12 @@
+{
+  "name": "goticket-railway-system",
+  "version": "2.0.0",
+  "description": "GO TICKET - Indian Railways Reservation & Management System",
+  "main": "api/index.js",
+  "scripts": {
+    "start": "java -cp backend/bin com.velocity.VelocityServer 8080"
+  },
+  "keywords": ["railway", "irctc", "reservation", "tickets"],
+  "author": "GO TICKET",
+  "license": "ISC"
+}
